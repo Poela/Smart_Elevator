@@ -1,0 +1,501 @@
+{
+  "title": "Smart Elevator – Prädiktive Steuerung",
+  "uid": "smart-elevator-api",
+  "description": "Empfehlungssystem für Aufzug-Vorpositionierung und Vorbereitung für API-Live-Integration",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "1m",
+  "time": { "from": "now-7d", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "editable": true,
+  "graphTooltip": 1,
+  "fiscalYearStartMonth": 0,
+  "id": null,
+  "tags": ["elevator", "predictive", "api"],
+  "annotations": {
+    "list": [{
+      "builtIn": 1,
+      "datasource": { "type": "grafana", "uid": "-- Grafana --" },
+      "enable": true, "hide": true,
+      "iconColor": "rgba(168, 85, 247, 1)",
+      "name": "Annotations & Alerts",
+      "type": "dashboard"
+    }]
+  },
+
+  "links": [
+    {
+      "title": "📊 Übersicht",
+      "type": "link",
+      "url": "/d/smart-elevator-v1",
+      "targetBlank": false,
+      "icon": "dashboard",
+      "tooltip": "Live-Status & Nutzungsübersicht"
+    },
+    {
+      "title": "📈 Analyse & Prognose",
+      "type": "link",
+      "url": "/d/smart-elevator-analyse",
+      "targetBlank": false,
+      "icon": "chart-line",
+      "tooltip": "Verhaltensanalyse, Forecast & Wetter-Korrelation"
+    },
+    {
+      "title": "🤖 Prädiktive Steuerung",
+      "type": "link",
+      "url": "/d/smart-elevator-api",
+      "targetBlank": false,
+      "icon": "bolt",
+      "tooltip": "Aktive Ansicht – Empfehlungssystem & API"
+    }
+  ],
+
+  "templating": {
+    "list": [
+      {
+        "current": { "selected": true, "text": "Alle", "value": "$__all" },
+        "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+        "definition": "SELECT name FROM elevators ORDER BY name",
+        "hide": 0, "includeAll": true, "multi": true,
+        "name": "elevator", "label": "Aufzug", "options": [],
+        "query": "SELECT name FROM elevators ORDER BY name",
+        "refresh": 1, "regex": "", "sort": 1, "type": "query"
+      }
+    ]
+  },
+
+  "panels": [
+
+    {
+      "content": "### [← 📊 Übersicht](/d/smart-elevator-v1) &nbsp;&nbsp;·&nbsp;&nbsp; [📈 Analyse →](/d/smart-elevator-analyse) &nbsp;&nbsp;·&nbsp;&nbsp; 🤖 **Prädiktive Steuerung**\n*Empfohlene Vorpositionierung auf Basis historischer Muster · API-Live-Integration vorbereitet*",
+      "gridPos": { "h": 2, "w": 24, "x": 0, "y": 0 },
+      "id": 10,
+      "options": { "code": { "language": "plaintext", "showLineNumbers": false, "showMiniMap": false }, "content": "### [← 📊 Übersicht](/d/smart-elevator-v1) &nbsp;&nbsp;·&nbsp;&nbsp; [📈 Analyse →](/d/smart-elevator-analyse) &nbsp;&nbsp;·&nbsp;&nbsp; 🤖 **Prädiktive Steuerung**\n*Empfohlene Vorpositionierung auf Basis historischer Muster · API-Live-Integration vorbereitet*", "mode": "markdown" },
+      "title": "",
+      "transparent": true,
+      "type": "text"
+    },
+
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 2 },
+      "id": 500,
+      "title": "⚡ Aktuelle Stunde – Empfohlene Positionen",
+      "type": "row"
+    },
+
+    {
+      "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "mappings": [{ "options": { "from": 0, "result": { "text": "EG" }, "to": 0 }, "type": "range" }],
+          "noValue": "N/A",
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "#EF4444", "value": null },
+            { "color": "#F59E0B", "value": 40   },
+            { "color": "#10B981", "value": 70   }
+          ]},
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 5, "w": 6, "x": 0, "y": 3 },
+      "id": 402,
+      "options": {
+        "colorMode": "background", "graphMode": "none", "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "auto"
+      },
+      "title": "Links L-Bau · Jetzt",
+      "type": "stat",
+      "targets": [
+        {
+          "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+          "format": "table", "rawQuery": true,
+          "rawSql": "SELECT recommended_floor AS \"Stockwerk\" FROM v_predicted_floor WHERE elevator_name = 'Aufzug links L-Bau' AND hour_of_day = EXTRACT(HOUR FROM NOW() AT TIME ZONE 'Europe/Berlin')::int",
+          "refId": "A"
+        },
+        {
+          "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+          "format": "table", "rawQuery": true,
+          "rawSql": "SELECT confidence_pct AS \"Konfidenz %\" FROM v_predicted_floor WHERE elevator_name = 'Aufzug links L-Bau' AND hour_of_day = EXTRACT(HOUR FROM NOW() AT TIME ZONE 'Europe/Berlin')::int",
+          "refId": "B"
+        }
+      ]
+    },
+
+    {
+      "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "mappings": [],
+          "noValue": "N/A",
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "#EF4444", "value": null },
+            { "color": "#F59E0B", "value": 40   },
+            { "color": "#10B981", "value": 70   }
+          ]},
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 5, "w": 6, "x": 6, "y": 3 },
+      "id": 403,
+      "options": {
+        "colorMode": "background", "graphMode": "none", "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "auto"
+      },
+      "title": "Rechts L-Bau · Jetzt",
+      "type": "stat",
+      "targets": [
+        {
+          "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+          "format": "table", "rawQuery": true,
+          "rawSql": "SELECT recommended_floor AS \"Stockwerk\" FROM v_predicted_floor WHERE elevator_name = 'Aufzug rechts L-Bau' AND hour_of_day = EXTRACT(HOUR FROM NOW() AT TIME ZONE 'Europe/Berlin')::int",
+          "refId": "A"
+        },
+        {
+          "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+          "format": "table", "rawQuery": true,
+          "rawSql": "SELECT confidence_pct AS \"Konfidenz %\" FROM v_predicted_floor WHERE elevator_name = 'Aufzug rechts L-Bau' AND hour_of_day = EXTRACT(HOUR FROM NOW() AT TIME ZONE 'Europe/Berlin')::int",
+          "refId": "B"
+        }
+      ]
+    },
+
+    {
+      "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "mappings": [],
+          "noValue": "N/A",
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "#EF4444", "value": null },
+            { "color": "#F59E0B", "value": 40   },
+            { "color": "#10B981", "value": 70   }
+          ]},
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 5, "w": 6, "x": 12, "y": 3 },
+      "id": 404,
+      "options": {
+        "colorMode": "background", "graphMode": "none", "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "auto"
+      },
+      "title": "Campus HN West · Jetzt",
+      "type": "stat",
+      "targets": [
+        {
+          "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+          "format": "table", "rawQuery": true,
+          "rawSql": "SELECT recommended_floor AS \"Stockwerk\" FROM v_predicted_floor WHERE elevator_name = 'Campus Brücken HN West' AND hour_of_day = EXTRACT(HOUR FROM NOW() AT TIME ZONE 'Europe/Berlin')::int",
+          "refId": "A"
+        },
+        {
+          "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+          "format": "table", "rawQuery": true,
+          "rawSql": "SELECT confidence_pct AS \"Konfidenz %\" FROM v_predicted_floor WHERE elevator_name = 'Campus Brücken HN West' AND hour_of_day = EXTRACT(HOUR FROM NOW() AT TIME ZONE 'Europe/Berlin')::int",
+          "refId": "B"
+        }
+      ]
+    },
+
+    {
+      "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "mappings": [],
+          "noValue": "N/A",
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "#EF4444", "value": null },
+            { "color": "#F59E0B", "value": 40   },
+            { "color": "#10B981", "value": 70   }
+          ]},
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 5, "w": 6, "x": 18, "y": 3 },
+      "id": 405,
+      "options": {
+        "colorMode": "background", "graphMode": "none", "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "auto"
+      },
+      "title": "Feuerwehraufzug · Jetzt",
+      "type": "stat",
+      "targets": [
+        {
+          "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+          "format": "table", "rawQuery": true,
+          "rawSql": "SELECT recommended_floor AS \"Stockwerk\" FROM v_predicted_floor WHERE elevator_name = 'Feuerwehraufzug L-Bau' AND hour_of_day = EXTRACT(HOUR FROM NOW() AT TIME ZONE 'Europe/Berlin')::int",
+          "refId": "A"
+        },
+        {
+          "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+          "format": "table", "rawQuery": true,
+          "rawSql": "SELECT confidence_pct AS \"Konfidenz %\" FROM v_predicted_floor WHERE elevator_name = 'Feuerwehraufzug L-Bau' AND hour_of_day = EXTRACT(HOUR FROM NOW() AT TIME ZONE 'Europe/Berlin')::int",
+          "refId": "B"
+        }
+      ]
+    },
+
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 8 },
+      "id": 510,
+      "title": "🤖 Prädiktive Positionierung – Tagesübersicht",
+      "type": "row"
+    },
+
+    {
+      "content": "#### Wie funktioniert das System?\n\nFür jede Stunde des Tages wird statistisch ermittelt, **in welchem Stockwerk sich der Aufzug historisch am häufigsten befunden hat**. Dieses Stockwerk wird als Zielposition empfohlen, wenn der Aufzug gerade nicht aktiv genutzt wird.\n\n| Konfidenz | Bedeutung | Empfohlene Aktion |\n|-----------|-----------|-------------------|\n| 🟢 > 70 % | Eindeutiges Muster | Automatische Vorpositionierung aktivieren |\n| 🟡 40–70 % | Moderates Muster | Empfehlung mit manueller Freigabe |\n| 🔴 < 40 % | Unklares Muster | Aufzug verbleibt an aktueller Position |\n\n> **Status:** API-Anbindung ausstehend. Empfehlungslogik vollständig berechnet – wartet auf Aktivierung.",
+      "gridPos": { "h": 7, "w": 24, "x": 0, "y": 9 },
+      "id": 511,
+      "options": { "code": { "language": "plaintext", "showLineNumbers": false, "showMiniMap": false }, "content": "#### Wie funktioniert das System?\n\nFür jede Stunde des Tages wird statistisch ermittelt, **in welchem Stockwerk sich der Aufzug historisch am häufigsten befunden hat**. Dieses Stockwerk wird als Zielposition empfohlen, wenn der Aufzug gerade nicht aktiv genutzt wird.\n\n| Konfidenz | Bedeutung | Empfohlene Aktion |\n|-----------|-----------|-------------------|\n| 🟢 > 70 % | Eindeutiges Muster | Automatische Vorpositionierung aktivieren |\n| 🟡 40–70 % | Moderates Muster | Empfehlung mit manueller Freigabe |\n| 🔴 < 40 % | Unklares Muster | Aufzug verbleibt an aktueller Position |\n\n> **Status:** API-Anbindung ausstehend. Empfehlungslogik vollständig berechnet – wartet auf Aktivierung.", "mode": "markdown" },
+      "title": "",
+      "transparent": false,
+      "type": "text"
+    },
+
+    {
+      "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "custom": { "align": "center", "cellOptions": { "type": "auto" }, "inspect": false },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byRegexp", "options": "Links %|Rechts %|Campus %|FW %" },
+            "properties": [
+              { "id": "custom.width", "value": 90 },
+              { "id": "custom.cellOptions", "value": { "type": "color-background", "mode": "basic" } },
+              { "id": "thresholds", "value": { "mode": "absolute", "steps": [
+                { "color": "#7F1D1D", "value": null },
+                { "color": "#92400E", "value": 40   },
+                { "color": "#14532D", "value": 70   }
+              ]}}
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Uhrzeit" },
+            "properties": [
+              { "id": "custom.width", "value": 95 },
+              { "id": "custom.align", "value": "left" }
+            ]
+          }
+        ]
+      },
+      "gridPos": { "h": 13, "w": 24, "x": 0, "y": 16 },
+      "id": 401,
+      "options": {
+        "cellHeight": "sm",
+        "footer": { "countRows": false, "fields": "", "reducer": ["sum"], "show": false },
+        "showHeader": true,
+        "sortBy": [{ "desc": false, "displayName": "Uhrzeit" }]
+      },
+      "title": "Empfohlene Stockwerk-Positionen je Stunde (0–23 Uhr)",
+      "description": "Statistisch optimale Vorpositionierung. Konfidenz = Anteil dieser Stockwerk-Ereignisse an der Gesamtstunde.",
+      "type": "table",
+      "targets": [{
+        "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+        "format": "table", "rawQuery": true,
+        "rawSql": "SELECT LPAD(hour_of_day::text, 2, '0') || ':00 Uhr' AS \"Uhrzeit\", MAX(CASE WHEN elevator_name = 'Aufzug links L-Bau'     THEN 'OG ' || recommended_floor END) AS \"Links L-Bau\", MAX(CASE WHEN elevator_name = 'Aufzug links L-Bau'     THEN confidence_pct END)::numeric AS \"Links %\", MAX(CASE WHEN elevator_name = 'Aufzug rechts L-Bau'    THEN 'OG ' || recommended_floor END) AS \"Rechts L-Bau\", MAX(CASE WHEN elevator_name = 'Aufzug rechts L-Bau'    THEN confidence_pct END)::numeric AS \"Rechts %\", MAX(CASE WHEN elevator_name = 'Campus Brücken HN West' THEN 'OG ' || recommended_floor END) AS \"Campus HN\", MAX(CASE WHEN elevator_name = 'Campus Brücken HN West' THEN confidence_pct END)::numeric AS \"Campus %\", MAX(CASE WHEN elevator_name = 'Feuerwehraufzug L-Bau'  THEN 'OG ' || recommended_floor END) AS \"Feuerwehr\", MAX(CASE WHEN elevator_name = 'Feuerwehraufzug L-Bau'  THEN confidence_pct END)::numeric AS \"FW %\" FROM v_predicted_floor GROUP BY hour_of_day ORDER BY hour_of_day",
+        "refId": "A"
+      }]
+    },
+
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 29 },
+      "id": 530,
+      "title": "🗺️ Stockwerk-Verteilung nach Tagesstunde",
+      "type": "row"
+    },
+
+    {
+      "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "fillOpacity": 75, "gradientMode": "opacity", "lineWidth": 0,
+            "hideFrom": { "legend": false, "tooltip": false, "viz": false }
+          },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 30 },
+      "id": 531,
+      "options": {
+        "barRadius": 0.03, "barWidth": 0.85, "fullHighlight": false, "groupWidth": 0.75,
+        "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "orientation": "auto", "showValue": "never", "stacking": "normal",
+        "tooltip": { "mode": "multi", "sort": "desc" },
+        "xTickLabelRotation": 0, "xTickLabelSpacing": 80, "xField": "Stunde"
+      },
+      "title": "Stockwerk-Verteilung je Stunde – Aufzug links L-Bau",
+      "description": "Gestapeltes Säulendiagramm: Welches Stockwerk war in welcher Stunde wie oft belegt? Je dunkler der Anteil, desto sicherer die Prognose.",
+      "type": "barchart",
+      "targets": [{
+        "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+        "format": "table", "rawQuery": true,
+        "rawSql": "SELECT LPAD(hour_of_day::text, 2, '0') || 'h' AS \"Stunde\", COALESCE(MAX(CASE WHEN floor = 0  THEN occurrences END), 0) AS \"EG\", COALESCE(MAX(CASE WHEN floor = 1  THEN occurrences END), 0) AS \"1.OG\", COALESCE(MAX(CASE WHEN floor = 2  THEN occurrences END), 0) AS \"2.OG\", COALESCE(MAX(CASE WHEN floor = 3  THEN occurrences END), 0) AS \"3.OG\", COALESCE(MAX(CASE WHEN floor = 4  THEN occurrences END), 0) AS \"4.OG\", COALESCE(MAX(CASE WHEN floor = 5  THEN occurrences END), 0) AS \"5.OG\", COALESCE(MAX(CASE WHEN floor >= 6 THEN occurrences END), 0) AS \"6.OG+\" FROM v_floor_by_hour WHERE elevator_name = 'Aufzug links L-Bau' GROUP BY hour_of_day ORDER BY hour_of_day",
+        "refId": "A"
+      }]
+    },
+
+    {
+      "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "fillOpacity": 75, "gradientMode": "opacity", "lineWidth": 0,
+            "hideFrom": { "legend": false, "tooltip": false, "viz": false }
+          },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 30 },
+      "id": 532,
+      "options": {
+        "barRadius": 0.03, "barWidth": 0.85, "fullHighlight": false, "groupWidth": 0.75,
+        "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "orientation": "auto", "showValue": "never", "stacking": "normal",
+        "tooltip": { "mode": "multi", "sort": "desc" },
+        "xTickLabelRotation": 0, "xTickLabelSpacing": 80, "xField": "Stunde"
+      },
+      "title": "Stockwerk-Verteilung je Stunde – Aufzug rechts L-Bau",
+      "type": "barchart",
+      "targets": [{
+        "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+        "format": "table", "rawQuery": true,
+        "rawSql": "SELECT LPAD(hour_of_day::text, 2, '0') || 'h' AS \"Stunde\", COALESCE(MAX(CASE WHEN floor = 0  THEN occurrences END), 0) AS \"EG\", COALESCE(MAX(CASE WHEN floor = 1  THEN occurrences END), 0) AS \"1.OG\", COALESCE(MAX(CASE WHEN floor = 2  THEN occurrences END), 0) AS \"2.OG\", COALESCE(MAX(CASE WHEN floor = 3  THEN occurrences END), 0) AS \"3.OG\", COALESCE(MAX(CASE WHEN floor = 4  THEN occurrences END), 0) AS \"4.OG\", COALESCE(MAX(CASE WHEN floor = 5  THEN occurrences END), 0) AS \"5.OG\", COALESCE(MAX(CASE WHEN floor >= 6 THEN occurrences END), 0) AS \"6.OG+\" FROM v_floor_by_hour WHERE elevator_name = 'Aufzug rechts L-Bau' GROUP BY hour_of_day ORDER BY hour_of_day",
+        "refId": "A"
+      }]
+    },
+
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 39 },
+      "id": 540,
+      "title": "🔌 API Live-Daten (Ausstehend)",
+      "type": "row"
+    },
+
+    {
+      "content": "### API-Anbindung noch nicht aktiv\n\nSobald die **Elevator API** konfiguriert und `api_poller.py` gestartet ist, erscheinen hier:\n\n- **Echtzeit-Stockwerkanzeige** mit Live-Aktualisierung (< 60 s Verzögerung)\n- **Abweichungsmonitor**: Vergleich Ist-Position vs. Empfehlung\n- **Eingriffs-Log**: Wann hat das System eine Positionierung ausgelöst?\n- **Effizienz-KPI**: Wartezeit-Reduktion durch Vorpositionierung\n\nZum Aktivieren: `ELEVATOR_API_URL` und optional `ELEVATOR_API_KEY` in `.env` setzen, dann `python api_poller.py` starten.",
+      "gridPos": { "h": 6, "w": 16, "x": 0, "y": 40 },
+      "id": 545,
+      "options": { "code": { "language": "plaintext", "showLineNumbers": false, "showMiniMap": false }, "content": "### API-Anbindung noch nicht aktiv\n\nSobald die **Elevator API** konfiguriert und `api_poller.py` gestartet ist, erscheinen hier:\n\n- **Echtzeit-Stockwerkanzeige** mit Live-Aktualisierung (< 60 s Verzögerung)\n- **Abweichungsmonitor**: Vergleich Ist-Position vs. Empfehlung\n- **Eingriffs-Log**: Wann hat das System eine Positionierung ausgelöst?\n- **Effizienz-KPI**: Wartezeit-Reduktion durch Vorpositionierung\n\nZum Aktivieren: `ELEVATOR_API_URL` und optional `ELEVATOR_API_KEY` in `.env` setzen, dann `python api_poller.py` starten.", "mode": "markdown" },
+      "title": "",
+      "type": "text"
+    },
+
+    {
+      "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "fixed", "fixedColor": "#374151" },
+          "mappings": [{ "options": { "0": { "text": "⏳ Ausstehend", "color": "#F59E0B" } }, "type": "value" }],
+          "noValue": "⏳ Ausstehend",
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "#374151", "value": null }] },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 6, "w": 8, "x": 16, "y": 40 },
+      "id": 541,
+      "options": {
+        "colorMode": "background", "graphMode": "none", "justifyMode": "center",
+        "orientation": "vertical",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "auto"
+      },
+      "title": "API-Status",
+      "description": "Zeigt 'Ausstehend' bis die API-Anbindung aktiv ist.",
+      "type": "stat",
+      "targets": [{
+        "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+        "format": "table", "rawQuery": true,
+        "rawSql": "SELECT COUNT(*) AS \"API-Ereignisse\" FROM elevator_events WHERE source = 'api'",
+        "refId": "A"
+      }]
+    },
+
+    {
+      "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "custom": {
+            "axisCenteredZero": false, "axisColorMode": "text", "axisLabel": "Ereignisse",
+            "axisPlacement": "auto", "drawStyle": "bars",
+            "fillOpacity": 70, "gradientMode": "opacity",
+            "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+            "lineWidth": 0, "scaleDistribution": { "type": "linear" },
+            "showPoints": "never", "spanNulls": false,
+            "stacking": { "group": "A", "mode": "normal" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "#8B5CF6", "value": null }] }
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 7, "w": 24, "x": 0, "y": 46 },
+      "id": 542,
+      "options": {
+        "legend": { "calcs": ["sum"], "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "title": "API-Ereignisse pro Stunde (Live – erscheint nach API-Aktivierung)",
+      "description": "Dieses Panel füllt sich automatisch, sobald api_poller.py aktiv Daten liefert.",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+          "format": "time_series", "rawQuery": true,
+          "rawSql": "SELECT date_trunc('hour', time) AS \"time\", COUNT(*) AS \"Aufzug links L-Bau\" FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Aufzug links L-Bau' AND source = 'api' AND $__timeFilter(ev.time) GROUP BY 1 ORDER BY 1",
+          "refId": "A"
+        },
+        {
+          "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+          "format": "time_series", "rawQuery": true,
+          "rawSql": "SELECT date_trunc('hour', time) AS \"time\", COUNT(*) AS \"Aufzug rechts L-Bau\" FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Aufzug rechts L-Bau' AND source = 'api' AND $__timeFilter(ev.time) GROUP BY 1 ORDER BY 1",
+          "refId": "B"
+        },
+        {
+          "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+          "format": "time_series", "rawQuery": true,
+          "rawSql": "SELECT date_trunc('hour', time) AS \"time\", COUNT(*) AS \"Campus Brücken HN West\" FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Campus Brücken HN West' AND source = 'api' AND $__timeFilter(ev.time) GROUP BY 1 ORDER BY 1",
+          "refId": "C"
+        }
+      ]
+    }
+
+  ]
+}

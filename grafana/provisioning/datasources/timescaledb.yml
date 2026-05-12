@@ -1,0 +1,21 @@
+apiVersion: 1
+
+datasources:
+  - name: TimescaleDB
+    uid: timescaledb-elevator
+    type: postgres
+    url: timescaledb:5432
+    user: postgres
+    jsonData:
+      database: elevator_db
+      sslmode: disable
+      maxOpenConns: 10
+      maxIdleConns: 2
+      maxIdleConnsAuto: true
+      connMaxLifetime: 14400
+      postgresVersion: 1600
+      timescaledb: true
+    secureJsonData:
+      password: Test123
+    isDefault: true
+    editable: true
