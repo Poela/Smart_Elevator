@@ -57,48 +57,78 @@ def get_connection():
 
 
 # ── Hilfsfunktionen ─────────────────────────────────────────────────────────
-def get_elevator_id(conn, name: str) -> int:
-    """Gibt die elevator_id für einen Aufzugsnamen zurück."""
+def get_elevator_info(conn, name: str) -> dict:
+    """Gibt id, max_floor und sensor_id (csv_import) für einen Aufzugsnamen zurück."""
     with conn.cursor() as cur:
-        cur.execute("SELECT id FROM elevators WHERE name = %s", (name,))
+        cur.execute(
+            """
+            SELECT e.id, e.max_floor, s.id AS sensor_id
+            FROM   elevators e
+            LEFT JOIN sensors s ON s.elevator_id = e.id AND s.type = 'csv_import'
+            WHERE  e.name = %s
+            LIMIT 1
+            """,
+            (name,),
+        )
         row = cur.fetchone()
         if row is None:
-            raise ValueError(f"Aufzug '{name}' nicht in der Datenbank gefunden. "
-                             "Bitte zuerst schema.sql ausführen.")
-        return row[0]
+            raise ValueError(
+                f"Aufzug '{name}' nicht in der Datenbank gefunden. "
+                "Bitte zuerst schema.sql / migration_v2.sql ausführen."
+            )
+        return {"id": row[0], "max_floor": row[1], "sensor_id": row[2]}
 
 
 def load_csv(filepath: Path) -> pd.DataFrame:
     """Liest eine Elevator-CSV-Datei ein und gibt ein bereinigtes DataFrame zurück."""
-    df = pd.read_csv(
-        filepath,
-        sep=";",
-        parse_dates=["Timestamp"],
-    )
+    df = pd.read_csv(filepath, sep=";", parse_dates=["Timestamp"])
 
-    # Spaltennamen normalisieren
     df.columns = [c.strip().lower() for c in df.columns]
     df.rename(columns={"timestamp": "time", "floor": "floor"}, inplace=True)
 
-    # Ungültige Zeilen entfernen
     before = len(df)
     df.dropna(subset=["time", "floor"], inplace=True)
+    # Physikalisch unmöglich (floor < 0): hart verwerfen
     df = df[df["floor"] >= 0]
     after = len(df)
-
     if before != after:
-        log.warning(f"  {before - after} ungültige Zeilen entfernt.")
+        log.warning(f"  {before - after} ungültige Zeilen verworfen (floor < 0 / null).")
 
-    # Duplikate entfernen (gleicher Timestamp + gleiche Etage)
     df.drop_duplicates(subset=["time", "floor"], inplace=True)
-
     return df
 
 
-def insert_events(conn, elevator_id: int, df: pd.DataFrame, source: str = "csv"):
-    """Schreibt Events per Batch in elevator_events."""
+def compute_quality_flag(df: pd.DataFrame, max_floor: int) -> pd.Series:
+    """
+    Berechnet quality_flag pro Zeile (Ingest-Level-Validierung):
+      1 = valid   – floor im gültigen Bereich
+      2 = suspect – floor > max_floor des Aufzugs (statistisch auffällig)
+    """
+    return df["floor"].apply(lambda f: 1 if f <= max_floor else 2)
+
+
+def insert_events(conn, elevator_info: dict, df: pd.DataFrame, source: str = "csv"):
+    """Schreibt Events per Batch in elevator_events inkl. quality_flag und sensor_id."""
+    elevator_id = elevator_info["id"]
+    sensor_id   = elevator_info["sensor_id"]
+    max_floor   = elevator_info["max_floor"]
+
+    df = df.copy()
+    df["quality_flag"] = compute_quality_flag(df, max_floor)
+
+    suspect = (df["quality_flag"] == 2).sum()
+    if suspect:
+        log.warning(f"  {suspect} Zeilen mit floor > max_floor ({max_floor}) → quality_flag=2")
+
     records = [
-        (row["time"].to_pydatetime(), elevator_id, int(row["floor"]), source)
+        (
+            row["time"].to_pydatetime(),
+            elevator_id,
+            int(row["floor"]),
+            source,
+            sensor_id,
+            int(row["quality_flag"]),
+        )
         for _, row in df.iterrows()
     ]
 
@@ -106,9 +136,10 @@ def insert_events(conn, elevator_id: int, df: pd.DataFrame, source: str = "csv")
         execute_values(
             cur,
             """
-            INSERT INTO elevator_events (time, elevator_id, floor, source)
+            INSERT INTO elevator_events
+                (time, elevator_id, floor, source, sensor_id, quality_flag)
             VALUES %s
-            ON CONFLICT DO NOTHING
+            ON CONFLICT (time, elevator_id) DO NOTHING
             """,
             records,
         )
@@ -135,11 +166,11 @@ def main():
         log.info(f"Verarbeite: {filename}")
 
         try:
-            elevator_id = get_elevator_id(conn, elevator_name)
-            df = load_csv(filepath)
-            count = insert_events(conn, elevator_id, df)
+            elevator_info = get_elevator_info(conn, elevator_name)
+            df    = load_csv(filepath)
+            count = insert_events(conn, elevator_info, df)
             total_imported += count
-            log.info(f"  ✓ {count} Datensätze importiert (Aufzug-ID: {elevator_id})")
+            log.info(f"  ✓ {count} Datensätze importiert (Aufzug-ID: {elevator_info['id']})")
 
         except Exception as e:
             log.error(f"  ✗ Fehler bei '{filename}': {e}")

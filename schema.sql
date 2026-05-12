@@ -1,6 +1,20 @@
 -- ============================================================
 -- Elevator Monitoring – DB Schema (PostgreSQL + TimescaleDB)
--- Phase 1: CSV Import | Phase 2: API Polling
+-- Phase 1: CSV Import | Phase 2: API Polling | Phase 3: Services
+--
+-- DB-Wahl: PostgreSQL + TimescaleDB (statt MongoDB)
+--   ✓ JOIN-Fähigkeit: Stammdaten + Zeitreihen in einer Engine
+--   ✓ time_bucket() + Continuous Aggregates ersetzen MapReduce
+--   ✓ JSONB: flexibler Attribut-Teil ohne ALTER TABLE / Migration
+--   ✓ Hypertable-Partitionierung nach Zeit (Chunk = 1 Woche)
+--   ✓ ON CONFLICT = atomares Upsert ohne Netzwerk-Transaktion
+--   MongoDB-Vorteil wäre: vollständig schemaloser Ingress,
+--   horizontales Sharding ab Tag 1, Dokument-Nesting > 3 Ebenen.
+--
+-- Schema orientiert sich an OGC SensorThings API:
+--   elevators       → Things       (physisches Objekt)
+--   sensors         → Sensors      (Messgerät / Datenquelle)
+--   elevator_events → Observations (Einzelmessung)
 -- ============================================================
 
 -- TimescaleDB Extension aktivieren
@@ -11,27 +25,62 @@ CREATE EXTENSION IF NOT EXISTS timescaledb;
 -- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS elevators (
     id          SERIAL PRIMARY KEY,
-    name        TEXT NOT NULL UNIQUE,       -- z.B. "Aufzug links L-Bau"
-    location    TEXT,                       -- z.B. "L-Bau", "Campus HN"
-    max_floor   INTEGER NOT NULL DEFAULT 10
+    name        TEXT    NOT NULL UNIQUE,
+    location    TEXT,
+    max_floor   INTEGER NOT NULL DEFAULT 10,
+    meta        JSONB   NOT NULL DEFAULT '{}'  -- Geo, Hersteller, Modell, Baujahr …
 );
 
--- Stammdaten einfügen
-INSERT INTO elevators (name, location, max_floor) VALUES
-    ('Aufzug links L-Bau',       'L-Bau',      10),
-    ('Aufzug rechts L-Bau',      'L-Bau',      10),
-    ('Campus Brücken HN West',   'Campus HN',   1),
-    ('Feuerwehraufzug L-Bau',    'L-Bau',      10)
+-- Stammdaten einfügen (meta: Geo + technische Attribute – erweiterbar ohne Migration)
+INSERT INTO elevators (name, location, max_floor, meta) VALUES
+    ('Aufzug links L-Bau',     'L-Bau',     10,
+     '{"lat":49.1427,"lon":9.2199,"manufacturer":"Schindler","model":"3300 MRL","max_speed_mps":1.6,"commissioned_year":2018}'),
+    ('Aufzug rechts L-Bau',    'L-Bau',     10,
+     '{"lat":49.1427,"lon":9.2199,"manufacturer":"Schindler","model":"3300 MRL","max_speed_mps":1.6,"commissioned_year":2018}'),
+    ('Campus Brücken HN West', 'Campus HN',  1,
+     '{"lat":49.1401,"lon":9.2188,"manufacturer":"Otis","model":"Gen2 Comfort","max_speed_mps":1.0,"commissioned_year":2020}'),
+    ('Feuerwehraufzug L-Bau',  'L-Bau',     10,
+     '{"lat":49.1427,"lon":9.2199,"manufacturer":"Schindler","model":"5500","max_speed_mps":1.6,"commissioned_year":2018}')
 ON CONFLICT (name) DO NOTHING;
+
+-- ------------------------------------------------------------
+-- Sensor-Registry  (Stammdaten: Datenquelle / Messgerät)
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS sensors (
+    id            SERIAL PRIMARY KEY,
+    elevator_id   INTEGER NOT NULL REFERENCES elevators(id) ON DELETE CASCADE,
+    type          TEXT    NOT NULL
+                    CHECK (type IN ('csv_import','rest_api','mqtt','modbus','manual')),
+    name          TEXT    NOT NULL,
+    endpoint      TEXT,                          -- URL, MQTT-Topic, Modbus-Adresse
+    meta          JSONB   NOT NULL DEFAULT '{}', -- Protokoll, Firmware, Kalibrierung …
+    active        BOOLEAN NOT NULL DEFAULT TRUE,
+    registered_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE (elevator_id, name)
+);
+
+INSERT INTO sensors (elevator_id, type, name, meta)
+SELECT id,
+       'csv_import',
+       'CSV ' || name,
+       jsonb_build_object('filename', name || '.csv', 'format', 'semicolon-separated')
+FROM   elevators
+ON CONFLICT (elevator_id, name) DO NOTHING;
 
 -- ------------------------------------------------------------
 -- Fahrtenereignisse (Zeitreihentabelle)
 -- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS elevator_events (
-    time            TIMESTAMPTZ     NOT NULL,
-    elevator_id     INTEGER         NOT NULL REFERENCES elevators(id),
-    floor           SMALLINT        NOT NULL,
-    source          TEXT            NOT NULL DEFAULT 'csv'  -- 'csv' | 'api'
+    time            TIMESTAMPTZ  NOT NULL,
+    elevator_id     INTEGER      NOT NULL REFERENCES elevators(id),
+    floor           SMALLINT     NOT NULL,
+    source          TEXT         NOT NULL DEFAULT 'csv',
+    sensor_id       INTEGER      REFERENCES sensors(id),
+    attributes      JSONB        NOT NULL DEFAULT '{}',  -- Richtung, Last-kg, Tür-Status …
+    quality_flag    SMALLINT     NOT NULL DEFAULT 0,     -- 0=raw 1=valid 2=suspect 3=invalid
+    CONSTRAINT chk_floor_range  CHECK (floor  >= 0 AND floor <= 100),
+    CONSTRAINT chk_quality_flag CHECK (quality_flag BETWEEN 0 AND 3),
+    CONSTRAINT chk_source_valid CHECK (source IN ('csv','api','manual','correction'))
 );
 
 -- TimescaleDB Hypertable (partitioniert nach Zeit, 1 Woche pro Chunk)
@@ -164,6 +213,83 @@ SELECT DISTINCT ON (elevator_name, hour_of_day)
 FROM v_floor_by_hour
 ORDER BY elevator_name, hour_of_day, occurrences DESC;
 
+-- ------------------------------------------------------------
+-- Erweiterte Indizes
+-- ------------------------------------------------------------
+-- GIN für JSONB-Spalten (ermöglicht @>, ?, ?& Operators)
+CREATE INDEX IF NOT EXISTS idx_events_attributes_gin
+    ON elevator_events USING GIN (attributes);
+CREATE INDEX IF NOT EXISTS idx_elevators_meta_gin
+    ON elevators USING GIN (meta);
+
+-- Functional Indexes für Geo-Queries ohne PostGIS
+CREATE INDEX IF NOT EXISTS idx_elevators_lat
+    ON elevators (( (meta->>'lat')::float ));
+CREATE INDEX IF NOT EXISTS idx_elevators_lon
+    ON elevators (( (meta->>'lon')::float ));
+
+-- Partial-Index: nicht-valide Events (Monitoring, Qualitäts-Reports)
+CREATE INDEX IF NOT EXISTS idx_events_quality_not_valid
+    ON elevator_events (quality_flag, time DESC)
+    WHERE quality_flag != 1;
+
+CREATE INDEX IF NOT EXISTS idx_events_source
+    ON elevator_events (source, time DESC);
+
+-- ------------------------------------------------------------
+-- Continuous Aggregates (Aggregations-Strategie)
+--   Rohdaten       → elevator_events  (Retention: 1 Jahr)
+--   Stundenmittel  → ev_hourly        (keine Retention – für Langzeit-Analyse)
+--   Tagesmittel    → ev_daily         (keine Retention – für Langzeit-Analyse)
+--   materialized_only=false: Echtzeit-Tail wird on-the-fly ergänzt
+-- ------------------------------------------------------------
+CREATE MATERIALIZED VIEW IF NOT EXISTS ev_hourly
+WITH (timescaledb.continuous, timescaledb.materialized_only = false) AS
+SELECT
+    time_bucket('1 hour', time)  AS bucket,
+    elevator_id,
+    AVG(floor)::REAL             AS avg_floor,
+    MIN(floor)                   AS min_floor,
+    MAX(floor)                   AS max_floor,
+    COUNT(*)::INTEGER            AS trip_count
+FROM elevator_events
+GROUP BY bucket, elevator_id
+WITH NO DATA;
+
+SELECT add_continuous_aggregate_policy('ev_hourly',
+    start_offset      => INTERVAL '3 hours',
+    end_offset        => INTERVAL '1 hour',
+    schedule_interval => INTERVAL '1 hour',
+    if_not_exists     => TRUE
+);
+
+CREATE MATERIALIZED VIEW IF NOT EXISTS ev_daily
+WITH (timescaledb.continuous, timescaledb.materialized_only = false) AS
+SELECT
+    time_bucket('1 day', time)   AS bucket,
+    elevator_id,
+    AVG(floor)::REAL             AS avg_floor,
+    MIN(floor)                   AS min_floor,
+    MAX(floor)                   AS max_floor,
+    COUNT(*)::INTEGER            AS trip_count
+FROM elevator_events
+GROUP BY bucket, elevator_id
+WITH NO DATA;
+
+SELECT add_continuous_aggregate_policy('ev_daily',
+    start_offset      => INTERVAL '3 days',
+    end_offset        => INTERVAL '1 day',
+    schedule_interval => INTERVAL '1 day',
+    if_not_exists     => TRUE
+);
+
+-- ------------------------------------------------------------
+-- Retention Policies
+-- ------------------------------------------------------------
+SELECT add_retention_policy('elevator_events',     INTERVAL '1 year',  if_not_exists => TRUE);
+SELECT add_retention_policy('weather_observations', INTERVAL '3 years', if_not_exists => TRUE);
+SELECT add_retention_policy('weather_hourly',       INTERVAL '90 days', if_not_exists => TRUE);
+
 -- ============================================================
 -- Wetter-Integration & Korrelationsanalyse (DWD API)
 -- Station: Öhringen 10729 (nächste DWD-Station zu Heilbronn)
@@ -222,6 +348,22 @@ CREATE TABLE IF NOT EXISTS elevator_events_dlq (
 CREATE INDEX IF NOT EXISTS idx_dlq_unresolved
     ON elevator_events_dlq (attempted_at)
     WHERE resolved_at IS NULL;
+
+-- Korrektur-Log (Auditpfad für Late-Data / Korrekturen)
+-- Workflow: 1) Eintrag hier anlegen, 2) Original per UPDATE floor=new, quality_flag=1 fixen
+CREATE TABLE IF NOT EXISTS elevator_corrections (
+    id              SERIAL PRIMARY KEY,
+    original_time   TIMESTAMPTZ  NOT NULL,
+    elevator_id     INTEGER      NOT NULL REFERENCES elevators(id),
+    old_floor       SMALLINT     NOT NULL,
+    new_floor       SMALLINT     NOT NULL,
+    reason          TEXT,
+    corrected_at    TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    corrected_by    TEXT         NOT NULL DEFAULT 'system'
+);
+
+CREATE INDEX IF NOT EXISTS idx_corrections_elevator_time
+    ON elevator_corrections (elevator_id, original_time DESC);
 
 -- ── Korrelations-Views ────────────────────────────────────────────────────────
 

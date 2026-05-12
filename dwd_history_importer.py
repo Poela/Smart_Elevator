@@ -57,7 +57,8 @@ logging.basicConfig(
 log = logging.getLogger("elevator.dwd_history")
 
 # ── Konfiguration ─────────────────────────────────────────────────────────────
-STATIONS_ID  = os.getenv("DWD_STATIONS_ID", "03761")   # Öhringen (Stations_id, 5-stellig)
+STATIONS_ID  = os.getenv("DWD_STATIONS_ID", "03761")   # Öhringen (interne DWD-ID für URL)
+DB_STATION_ID = os.getenv("DWD_STATION_ID", "10729")  # WMO-ID – konsistent mit dwd_poller.py
 DWD_BASE_URL = "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/daily/kl"
 
 DB_CONFIG = {
@@ -302,11 +303,11 @@ def import_range(data_range: str, dry_run: bool) -> None:
 
     if not dry_run:
         conn  = psycopg2.connect(**DB_CONFIG)
-        count = store(conn, df, STATIONS_ID, dry_run=False)
+        count = store(conn, df, DB_STATION_ID, dry_run=False)
         conn.close()
         log.info("✓ %d Records in weather_observations gespeichert.", count)
     else:
-        store(None, df, STATIONS_ID, dry_run=True)
+        store(None, df, DB_STATION_ID, dry_run=True)
 
 
 def main() -> None:
@@ -329,7 +330,8 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    log.info("Station: %s (Öhringen / Heilbronn) | dry-run: %s", STATIONS_ID, args.dry_run)
+    log.info("Station: %s (Öhringen / Heilbronn) | DB-ID: %s | dry-run: %s",
+             STATIONS_ID, DB_STATION_ID, args.dry_run)
 
     if args.range in ("recent", "both"):
         import_range("recent", args.dry_run)
