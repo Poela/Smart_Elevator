@@ -163,3 +163,187 @@ SELECT DISTINCT ON (elevator_name, hour_of_day)
     )                                                               AS confidence_pct
 FROM v_floor_by_hour
 ORDER BY elevator_name, hour_of_day, occurrences DESC;
+
+-- ============================================================
+-- Wetter-Integration & Korrelationsanalyse (DWD API)
+-- Station: Öhringen 10729 (nächste DWD-Station zu Heilbronn)
+-- ============================================================
+
+-- Tägliche Wetterdaten (aus DWD stationOverviewExtended)
+CREATE TABLE IF NOT EXISTS weather_observations (
+    time            TIMESTAMPTZ NOT NULL,
+    station_id      TEXT        NOT NULL,
+    temperature_min REAL,           -- °C
+    temperature_max REAL,           -- °C
+    temperature_avg REAL,           -- °C  (Mittel aus min/max)
+    precipitation   REAL,           -- mm
+    wind_speed      REAL,            -- km/h
+    sunshine_min    INTEGER,        -- Sonnenstunden in Minuten
+    icon            INTEGER,        -- DWD Wettersymbol-Code
+    source          TEXT DEFAULT 'dwd_daily'
+);
+
+SELECT create_hypertable(
+    'weather_observations', 'time',
+    chunk_time_interval => INTERVAL '4 weeks',
+    if_not_exists => TRUE
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_weather_obs_unique
+    ON weather_observations (time, station_id);
+
+-- Stündliche Vorhersagedaten (aus forecast1)
+CREATE TABLE IF NOT EXISTS weather_hourly (
+    time          TIMESTAMPTZ NOT NULL,
+    station_id    TEXT        NOT NULL,
+    temperature   REAL,           -- °C
+    precipitation REAL            -- mm
+);
+
+SELECT create_hypertable(
+    'weather_hourly', 'time',
+    chunk_time_interval => INTERVAL '1 week',
+    if_not_exists => TRUE
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_weather_hourly_unique
+    ON weather_hourly (time, station_id);
+
+-- Dead-Letter Queue für fehlgeschlagene API-Records
+CREATE TABLE IF NOT EXISTS elevator_events_dlq (
+    id           SERIAL      PRIMARY KEY,
+    attempted_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    payload      JSONB       NOT NULL,
+    error_msg    TEXT,
+    retry_count  INTEGER     DEFAULT 0,
+    resolved_at  TIMESTAMPTZ
+);
+
+CREATE INDEX IF NOT EXISTS idx_dlq_unresolved
+    ON elevator_events_dlq (attempted_at)
+    WHERE resolved_at IS NULL;
+
+-- ── Korrelations-Views ────────────────────────────────────────────────────────
+
+-- Tägliche Fahrten + Wetter (Basis für alle Korrelations-Panels)
+CREATE OR REPLACE VIEW v_elevator_weather_daily AS
+WITH daily_trips AS (
+    SELECT
+        date_trunc('day', time)  AS day,
+        e.name                   AS elevator_name,
+        COUNT(*)                 AS trip_count
+    FROM elevator_events ev
+    JOIN elevators e ON e.id = ev.elevator_id
+    GROUP BY day, e.name
+)
+SELECT
+    dt.day                  AS time,
+    dt.elevator_name,
+    dt.trip_count,
+    wo.temperature_min,
+    wo.temperature_max,
+    wo.temperature_avg,
+    wo.precipitation,
+    wo.wind_speed,
+    wo.sunshine_min
+FROM daily_trips dt
+JOIN weather_observations wo
+    ON date_trunc('day', wo.time) = dt.day
+ORDER BY dt.day, dt.elevator_name;
+
+-- Pearson-Korrelationskoeffizienten (PostgreSQL built-in corr())
+CREATE OR REPLACE VIEW v_weather_correlation AS
+WITH daily_trips AS (
+    SELECT
+        date_trunc('day', time)::date  AS day,
+        e.name                          AS elevator_name,
+        COUNT(*)                        AS trip_count
+    FROM elevator_events ev
+    JOIN elevators e ON e.id = ev.elevator_id
+    GROUP BY day, e.name
+),
+daily_weather AS (
+    SELECT
+        date_trunc('day', time)::date   AS day,
+        AVG(temperature_avg)            AS avg_temp,
+        AVG(temperature_max)            AS max_temp,
+        SUM(precipitation)              AS total_precip
+    FROM weather_observations
+    GROUP BY date_trunc('day', time)::date
+)
+SELECT
+    dt.elevator_name,
+    ROUND(corr(dt.trip_count, dw.avg_temp  )::numeric, 3) AS corr_temperature,
+    ROUND(corr(dt.trip_count, dw.total_precip)::numeric, 3) AS corr_precipitation,
+    COUNT(*)                                               AS sample_days
+FROM daily_trips dt
+JOIN daily_weather dw ON dt.day = dw.day
+GROUP BY dt.elevator_name
+ORDER BY dt.elevator_name;
+
+-- Ø Fahrten pro Temperaturbereich (Bucket-Analyse)
+CREATE OR REPLACE VIEW v_trips_by_temp_bucket AS
+WITH daily AS (
+    SELECT
+        date_trunc('day', ev.time)::date AS day,
+        e.name                           AS elevator_name,
+        COUNT(*)                         AS trip_count
+    FROM elevator_events ev
+    JOIN elevators e ON e.id = ev.elevator_id
+    GROUP BY day, e.name
+),
+weather_day AS (
+    SELECT date_trunc('day', time)::date AS day, temperature_avg
+    FROM weather_observations
+)
+SELECT
+    CASE
+        WHEN w.temperature_avg <  0  THEN '1: unter 0 C'
+        WHEN w.temperature_avg <  5  THEN '2: 0 bis 5 C'
+        WHEN w.temperature_avg < 10  THEN '3: 5 bis 10 C'
+        WHEN w.temperature_avg < 15  THEN '4: 10 bis 15 C'
+        WHEN w.temperature_avg < 20  THEN '5: 15 bis 20 C'
+        WHEN w.temperature_avg < 25  THEN '6: 20 bis 25 C'
+        ELSE                              '7: ueber 25 C'
+    END                                         AS temp_bucket,
+    d.elevator_name,
+    ROUND(AVG(d.trip_count)::numeric, 1)        AS avg_trips_per_day,
+    COUNT(*)                                    AS sample_days
+FROM daily d
+JOIN weather_day w ON d.day = w.day
+WHERE w.temperature_avg IS NOT NULL
+GROUP BY temp_bucket, d.elevator_name
+ORDER BY temp_bucket, d.elevator_name;
+
+-- Ø Fahrten pro Niederschlagsstufe (Bucket-Analyse)
+CREATE OR REPLACE VIEW v_trips_by_precip_bucket AS
+WITH daily AS (
+    SELECT
+        date_trunc('day', ev.time)::date AS day,
+        e.name                           AS elevator_name,
+        COUNT(*)                         AS trip_count
+    FROM elevator_events ev
+    JOIN elevators e ON e.id = ev.elevator_id
+    GROUP BY day, e.name
+),
+weather_day AS (
+    SELECT date_trunc('day', time)::date AS day, SUM(precipitation) AS precipitation
+    FROM weather_observations
+    GROUP BY date_trunc('day', time)::date
+)
+SELECT
+    CASE
+        WHEN w.precipitation = 0   THEN '1: Kein Regen (0mm)'
+        WHEN w.precipitation < 1   THEN '2: Sehr leicht (<1mm)'
+        WHEN w.precipitation < 5   THEN '3: Leicht (1-5mm)'
+        WHEN w.precipitation < 20  THEN '4: Massig (5-20mm)'
+        ELSE                            '5: Stark (>20mm)'
+    END                                         AS precip_bucket,
+    d.elevator_name,
+    ROUND(AVG(d.trip_count)::numeric, 1)        AS avg_trips_per_day,
+    COUNT(*)                                    AS sample_days
+FROM daily d
+JOIN weather_day w ON d.day = w.day
+WHERE w.precipitation IS NOT NULL
+GROUP BY precip_bucket, d.elevator_name
+ORDER BY precip_bucket, d.elevator_name;

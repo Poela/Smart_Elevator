@@ -26,12 +26,20 @@
 
   "links": [
     {
-      "title": "📊 Daten & Analyse",
+      "title": "📊 Übersicht",
       "type": "link",
       "url": "/d/smart-elevator-v1",
       "targetBlank": false,
       "icon": "dashboard",
-      "tooltip": "Historische Daten & Prognose"
+      "tooltip": "Live-Status & Nutzungsübersicht"
+    },
+    {
+      "title": "📈 Analyse & Prognose",
+      "type": "link",
+      "url": "/d/smart-elevator-analyse",
+      "targetBlank": false,
+      "icon": "chart-line",
+      "tooltip": "Verhaltensanalyse, Forecast & Wetter-Korrelation"
     },
     {
       "title": "🤖 Prädiktive Steuerung",
@@ -60,10 +68,10 @@
   "panels": [
 
     {
-      "content": "### [← 📊 Daten & Analyse](/d/smart-elevator-v1) &nbsp;&nbsp;·&nbsp;&nbsp; 🤖 **Prädiktive Steuerung**\n*Empfohlene Vorpositionierung auf Basis historischer Muster · API-Live-Integration vorbereitet*",
+      "content": "### [← 📊 Übersicht](/d/smart-elevator-v1) &nbsp;&nbsp;·&nbsp;&nbsp; [📈 Analyse →](/d/smart-elevator-analyse) &nbsp;&nbsp;·&nbsp;&nbsp; 🤖 **Prädiktive Steuerung**\n*Empfohlene Vorpositionierung auf Basis historischer Muster · API-Live-Integration vorbereitet*",
       "gridPos": { "h": 2, "w": 24, "x": 0, "y": 0 },
       "id": 10,
-      "options": { "code": { "language": "plaintext", "showLineNumbers": false, "showMiniMap": false }, "content": "### [← 📊 Daten & Analyse](/d/smart-elevator-v1) &nbsp;&nbsp;·&nbsp;&nbsp; 🤖 **Prädiktive Steuerung**\n*Empfohlene Vorpositionierung auf Basis historischer Muster · API-Live-Integration vorbereitet*", "mode": "markdown" },
+      "options": { "code": { "language": "plaintext", "showLineNumbers": false, "showMiniMap": false }, "content": "### [← 📊 Übersicht](/d/smart-elevator-v1) &nbsp;&nbsp;·&nbsp;&nbsp; [📈 Analyse →](/d/smart-elevator-analyse) &nbsp;&nbsp;·&nbsp;&nbsp; 🤖 **Prädiktive Steuerung**\n*Empfohlene Vorpositionierung auf Basis historischer Muster · API-Live-Integration vorbereitet*", "mode": "markdown" },
       "title": "",
       "transparent": true,
       "type": "text"
