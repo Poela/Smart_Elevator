@@ -457,6 +457,47 @@ WHERE w.temperature_avg IS NOT NULL
 GROUP BY temp_bucket, d.elevator_name
 ORDER BY temp_bucket, d.elevator_name;
 
+<<<<<<< HEAD
+=======
+-- ============================================================
+-- ML-Forecast (Prophet)
+-- ============================================================
+
+-- Forecast-Ergebnisse pro Aufzug, Modell und Generierungsdatum
+CREATE TABLE IF NOT EXISTS elevator_forecast (
+    time            TIMESTAMPTZ NOT NULL,       -- Prognose-Zeitpunkt (Tages-Mitternacht UTC)
+    elevator_name   TEXT        NOT NULL,
+    model           TEXT        NOT NULL DEFAULT 'prophet',
+    forecast_date   DATE        NOT NULL,       -- Wann wurde diese Prognose generiert?
+    yhat            REAL,                       -- Erwartete Fahrten
+    yhat_lower      REAL,                       -- Untere Konfidenzgrenze (80 %)
+    yhat_upper      REAL                        -- Obere Konfidenzgrenze (80 %)
+);
+
+SELECT create_hypertable(
+    'elevator_forecast', 'time',
+    chunk_time_interval => INTERVAL '4 weeks',
+    if_not_exists => TRUE
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_forecast_unique
+    ON elevator_forecast (time, elevator_name, model, forecast_date);
+
+-- Jeweils neueste Forecast-Generation pro Aufzug + Zeitpunkt
+CREATE OR REPLACE VIEW v_latest_forecast AS
+SELECT DISTINCT ON (time, elevator_name)
+    time,
+    elevator_name,
+    model,
+    GREATEST(0, yhat)       AS forecast_trips,
+    GREATEST(0, yhat_lower) AS ci_lower,
+    GREATEST(0, yhat_upper) AS ci_upper,
+    forecast_date
+FROM elevator_forecast
+ORDER BY time, elevator_name, forecast_date DESC;
+
+-- ── Wetter-Bucket-Analysen ──────────────────────────────────────────────────
+>>>>>>> c1b3efe3c488ba939147a211f2c6a67544c753e1
 -- Ø Fahrten pro Niederschlagsstufe (Bucket-Analyse)
 CREATE OR REPLACE VIEW v_trips_by_precip_bucket AS
 WITH daily AS (
