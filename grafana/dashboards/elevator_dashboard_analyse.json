@@ -307,39 +307,112 @@
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "palette-classic" },
-          "custom": { "fillOpacity": 80, "gradientMode": "opacity", "lineWidth": 0,
-            "hideFrom": { "legend": false, "tooltip": false, "viz": false } },
+          "custom": {
+            "drawStyle": "line", "fillOpacity": 12, "gradientMode": "scheme",
+            "lineInterpolation": "smooth", "lineWidth": 2,
+            "pointSize": 4, "showPoints": "auto", "spanNulls": false,
+            "stacking": { "group": "A", "mode": "none" },
+            "thresholdsStyle": { "mode": "off" }
+          },
           "mappings": [],
-          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] },
-          "unit": "short"
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
         },
         "overrides": [
-          { "matcher": { "id": "byName", "options": "Links L-Bau" },
+          { "matcher": { "id": "byRegexp", "options": "Ist .*" },
+            "properties": [
+              { "id": "custom.lineWidth",   "value": 1 },
+              { "id": "custom.lineStyle",   "value": { "fill": "solid" } },
+              { "id": "custom.fillOpacity", "value": 0 },
+              { "id": "custom.showPoints",  "value": "never" }
+            ]
+          },
+          { "matcher": { "id": "byRegexp", "options": "ML .*" },
+            "properties": [
+              { "id": "custom.lineWidth",   "value": 3 },
+              { "id": "custom.lineStyle",   "value": { "fill": "solid" } },
+              { "id": "custom.fillOpacity", "value": 0 }
+            ]
+          },
+          { "matcher": { "id": "byRegexp", "options": "CI oben .*" },
+            "properties": [
+              { "id": "custom.lineWidth",   "value": 0 },
+              { "id": "custom.fillOpacity", "value": 18 },
+              { "id": "custom.hideFrom",    "value": { "legend": true, "tooltip": false, "viz": false } }
+            ]
+          },
+          { "matcher": { "id": "byRegexp", "options": "CI unten .*" },
+            "properties": [
+              { "id": "custom.lineWidth",    "value": 0 },
+              { "id": "custom.fillBelowTo",  "value": "CI oben Links" },
+              { "id": "custom.fillOpacity",  "value": 0 },
+              { "id": "custom.hideFrom",     "value": { "legend": true, "tooltip": false, "viz": false } }
+            ]
+          },
+          { "matcher": { "id": "byName", "options": "Ist Links L-Bau" },
             "properties": [{ "id": "color", "value": { "fixedColor": "#06B6D4", "mode": "fixed" } }] },
-          { "matcher": { "id": "byName", "options": "Rechts L-Bau" },
+          { "matcher": { "id": "byName", "options": "ML Links L-Bau" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "#06B6D4", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "CI oben Links" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "#06B6D4", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "CI unten Links" },
+            "properties": [
+              { "id": "color",                "value": { "fixedColor": "#06B6D4", "mode": "fixed" } },
+              { "id": "custom.fillBelowTo",   "value": "CI oben Links" }
+            ]
+          },
+          { "matcher": { "id": "byName", "options": "Ist Rechts L-Bau" },
             "properties": [{ "id": "color", "value": { "fixedColor": "#8B5CF6", "mode": "fixed" } }] },
-          { "matcher": { "id": "byName", "options": "Campus HN" },
-            "properties": [{ "id": "color", "value": { "fixedColor": "#F97316", "mode": "fixed" } }] }
+          { "matcher": { "id": "byName", "options": "ML Rechts L-Bau" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "#8B5CF6", "mode": "fixed" } }] }
         ]
       },
-      "gridPos": { "h": 9, "w": 17, "x": 0, "y": 30 },
+      "gridPos": { "h": 11, "w": 24, "x": 0, "y": 30 },
       "id": 302,
       "options": {
-        "barRadius": 0.04, "barWidth": 0.7, "fullHighlight": false, "groupWidth": 0.75,
-        "legend": { "calcs": ["mean"], "displayMode": "list", "placement": "bottom", "showLegend": true },
-        "orientation": "auto", "showValue": "auto", "stacking": "none",
-        "tooltip": { "mode": "multi", "sort": "desc" },
-        "xTickLabelRotation": -30, "xTickLabelSpacing": 0, "xField": "Datum"
+        "legend": { "calcs": ["mean", "max"], "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "none" }
       },
-      "title": "14-Tage-Prognose (Wochentag-Durchschnitt)",
-      "description": "Erwartete Fahrten pro Tag für die nächsten 14 Tage – unabhängig vom Dashboard-Zeitfilter, zeigt immer heute bis heute+14.",
-      "type": "barchart",
-      "targets": [{
-        "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
-        "format": "table", "rawQuery": true,
-        "rawSql": "SELECT TO_CHAR(gs, 'DD.MM (Dy)') AS \"Datum\", ROUND(la.avg_per_day::numeric, 1) AS \"Links L-Bau\", ROUND(re.avg_per_day::numeric, 1) AS \"Rechts L-Bau\", ROUND(ca.avg_per_day::numeric, 1) AS \"Campus HN\" FROM generate_series(NOW()::date, NOW()::date + INTERVAL '13 days', '1 day'::interval) gs LEFT JOIN (SELECT EXTRACT(DOW FROM time)::int AS dow, COUNT(*) * 1.0 / NULLIF(COUNT(DISTINCT date_trunc('day', time)), 0) AS avg_per_day FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Aufzug links L-Bau' GROUP BY EXTRACT(DOW FROM time)::int) la ON EXTRACT(DOW FROM gs)::int = la.dow LEFT JOIN (SELECT EXTRACT(DOW FROM time)::int AS dow, COUNT(*) * 1.0 / NULLIF(COUNT(DISTINCT date_trunc('day', time)), 0) AS avg_per_day FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Aufzug rechts L-Bau' GROUP BY EXTRACT(DOW FROM time)::int) re ON EXTRACT(DOW FROM gs)::int = re.dow LEFT JOIN (SELECT EXTRACT(DOW FROM time)::int AS dow, COUNT(*) * 1.0 / NULLIF(COUNT(DISTINCT date_trunc('day', time)), 0) AS avg_per_day FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Campus Brücken HN West' GROUP BY EXTRACT(DOW FROM time)::int) ca ON EXTRACT(DOW FROM gs)::int = ca.dow ORDER BY gs",
-        "refId": "A"
-      }]
+      "title": "14-Tage-ML-Prognose (LightGBM) mit 80 % Konfidenzband",
+      "description": "Historische Ist-Werte (dünn) + Prophet-Prognose (dick) + 80%-Konfidenzband (Schimmer). Modell nutzt wöchentliche Saisonalität und DWD-Wetterdaten als Regressoren. Täglich neu trainiert.",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+          "format": "time_series", "rawQuery": true,
+          "rawSql": "SELECT date_trunc('day', time) AS \"time\", COUNT(*) AS \"Ist Links L-Bau\" FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Aufzug links L-Bau' AND $__timeFilter(ev.time) GROUP BY 1 ORDER BY 1",
+          "refId": "A"
+        },
+        {
+          "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+          "format": "time_series", "rawQuery": true,
+          "rawSql": "SELECT time AS \"time\", forecast_trips AS \"ML Links L-Bau\" FROM v_latest_forecast WHERE elevator_name = 'Aufzug links L-Bau' AND elevator_name IN ($elevator) AND $__timeFilter(time) ORDER BY time",
+          "refId": "B"
+        },
+        {
+          "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+          "format": "time_series", "rawQuery": true,
+          "rawSql": "SELECT time AS \"time\", ci_upper AS \"CI oben Links\" FROM v_latest_forecast WHERE elevator_name = 'Aufzug links L-Bau' AND elevator_name IN ($elevator) AND $__timeFilter(time) ORDER BY time",
+          "refId": "C"
+        },
+        {
+          "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+          "format": "time_series", "rawQuery": true,
+          "rawSql": "SELECT time AS \"time\", ci_lower AS \"CI unten Links\" FROM v_latest_forecast WHERE elevator_name = 'Aufzug links L-Bau' AND elevator_name IN ($elevator) AND $__timeFilter(time) ORDER BY time",
+          "refId": "D"
+        },
+        {
+          "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+          "format": "time_series", "rawQuery": true,
+          "rawSql": "SELECT date_trunc('day', time) AS \"time\", COUNT(*) AS \"Ist Rechts L-Bau\" FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Aufzug rechts L-Bau' AND $__timeFilter(ev.time) GROUP BY 1 ORDER BY 1",
+          "refId": "E"
+        },
+        {
+          "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+          "format": "time_series", "rawQuery": true,
+          "rawSql": "SELECT time AS \"time\", forecast_trips AS \"ML Rechts L-Bau\" FROM v_latest_forecast WHERE elevator_name = 'Aufzug rechts L-Bau' AND elevator_name IN ($elevator) AND $__timeFilter(time) ORDER BY time",
+          "refId": "F"
+        }
+      ]
     },
 
     {
