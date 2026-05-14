@@ -1,0 +1,38 @@
+# ============================================================
+# Elevator Poller – Config-driven Ingest
+# ============================================================
+# Neue Endpunkte / Sensoren werden hier ergänzt – kein Code-Change nötig.
+# Umgebungsvariablen werden als ${VAR_NAME} referenziert.
+#
+# Scheduling-Konzept (Begründung der Intervalle):
+#   60 s  – Hauptaufzüge: relevante Positionsdaten für Predictive Control,
+#            kurze Latenz wichtig für Echtzeitdarstellung in Grafana.
+#   120 s – Campus/Brücke: geringeres Aufkommen, längeres Intervall
+#            reduziert Last auf API und DB.
+#   Zeitzonen: APScheduler führt alle Trigger-Zeiten in UTC aus;
+#              die Konfiguration gilt als Europe/Berlin-Wallclock.
+#              Bei Sommer-/Winterzeitumstellung bleibt das Intervall stabil.
+# ============================================================
+
+sources:
+
+  - name: "Aufzüge L-Bau"
+    url: "${ELEVATOR_API_URL}"
+    api_key: "${ELEVATOR_API_KEY}"        # leer lassen wenn keine Auth nötig
+    poll_interval_sec: 60                 # alle 60 Sekunden pollen
+    timeout_sec: 10                       # Request-Timeout
+    rate_limit_rps: 1.0                   # max. 1 Request/Sekunde (Fairness)
+    field_mapping:
+      elevator_name: "name"              # API-Feld → interner Name
+      floor: "currentFloor"              # API-Feld → Stockwerk
+
+  # Beispiel: zweite unabhängige Quelle mit anderem Intervall
+  # - name: "Campus Brücken HN West"
+  #   url: "${CAMPUS_API_URL}"
+  #   api_key: "${CAMPUS_API_KEY}"
+  #   poll_interval_sec: 120
+  #   timeout_sec: 15
+  #   rate_limit_rps: 0.5
+  #   field_mapping:
+  #     elevator_name: "deviceId"
+  #     floor: "level"

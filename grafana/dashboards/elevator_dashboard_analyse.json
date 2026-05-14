@@ -1,0 +1,692 @@
+{
+  "title": "Smart Elevator – Analyse & Prognose",
+  "uid": "smart-elevator-analyse",
+  "description": "Verhaltensanalyse nach Tageszeit, Forecast, Wetter-Korrelation (DWD Heilbronn)",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "5m",
+  "time": { "from": "now-30d", "to": "now+14d" },
+  "timepicker": {},
+  "timezone": "browser",
+  "editable": true,
+  "graphTooltip": 1,
+  "fiscalYearStartMonth": 0,
+  "id": null,
+  "tags": ["elevator", "analyse", "forecast", "weather"],
+  "annotations": {
+    "list": [{
+      "builtIn": 1,
+      "datasource": { "type": "grafana", "uid": "-- Grafana --" },
+      "enable": true, "hide": true,
+      "iconColor": "rgba(168, 85, 247, 1)",
+      "name": "Annotations & Alerts",
+      "type": "dashboard"
+    }]
+  },
+
+  "links": [
+    {
+      "title": "📊 Übersicht",
+      "type": "link",
+      "url": "/d/smart-elevator-v1",
+      "targetBlank": false,
+      "icon": "dashboard",
+      "tooltip": "Live-Status & Nutzungsübersicht"
+    },
+    {
+      "title": "📈 Analyse & Prognose",
+      "type": "link",
+      "url": "/d/smart-elevator-analyse",
+      "targetBlank": false,
+      "icon": "chart-line",
+      "tooltip": "Aktive Ansicht – Verhaltensanalyse, Forecast & Wetter"
+    },
+    {
+      "title": "🤖 Prädiktive Steuerung",
+      "type": "link",
+      "url": "/d/smart-elevator-api",
+      "targetBlank": false,
+      "icon": "bolt",
+      "tooltip": "Empfehlungssystem & API-Live-Daten"
+    }
+  ],
+
+  "templating": {
+    "list": [
+      {
+        "current": { "selected": true, "text": "Alle", "value": "$__all" },
+        "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+        "definition": "SELECT name FROM elevators ORDER BY name",
+        "hide": 0, "includeAll": true, "multi": true,
+        "name": "elevator", "label": "Aufzug", "options": [],
+        "query": "SELECT name FROM elevators ORDER BY name",
+        "refresh": 1, "regex": "", "sort": 1, "type": "query"
+      },
+      {
+        "current": { "selected": true, "text": "Tag", "value": "day" },
+        "hide": 0, "includeAll": false, "multi": false,
+        "name": "aggregation", "label": "Aggregation",
+        "options": [
+          { "selected": true,  "text": "Tag",   "value": "day"   },
+          { "selected": false, "text": "Woche",  "value": "week"  },
+          { "selected": false, "text": "Monat",  "value": "month" }
+        ],
+        "query": "day,week,month",
+        "type": "custom"
+      }
+    ]
+  },
+
+  "panels": [
+
+    {
+      "content": "### [← 📊 Übersicht](/d/smart-elevator-v1) &nbsp;&nbsp;·&nbsp;&nbsp; 📈 **Analyse & Prognose** &nbsp;&nbsp;·&nbsp;&nbsp; [🤖 Prädiktive Steuerung →](/d/smart-elevator-api)",
+      "gridPos": { "h": 2, "w": 24, "x": 0, "y": 0 },
+      "id": 11,
+      "options": { "code": { "language": "plaintext", "showLineNumbers": false, "showMiniMap": false }, "content": "### [← 📊 Übersicht](/d/smart-elevator-v1) &nbsp;&nbsp;·&nbsp;&nbsp; 📈 **Analyse & Prognose** &nbsp;&nbsp;·&nbsp;&nbsp; [🤖 Prädiktive Steuerung →](/d/smart-elevator-api)", "mode": "markdown" },
+      "title": "",
+      "transparent": true,
+      "type": "text"
+    },
+
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 2 },
+      "id": 104,
+      "title": "🕐 Verhaltensanalyse nach Tageszeit",
+      "type": "row"
+    },
+
+    {
+      "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "fillOpacity": 80, "gradientMode": "opacity", "lineWidth": 0,
+            "hideFrom": { "legend": false, "tooltip": false, "viz": false } },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] },
+          "unit": "short"
+        },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "Links L-Bau" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "#06B6D4", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "Rechts L-Bau" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "#8B5CF6", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "Campus HN" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "#F97316", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "Feuerwehr" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "#EF4444", "mode": "fixed" } }] }
+        ]
+      },
+      "gridPos": { "h": 9, "w": 24, "x": 0, "y": 3 },
+      "id": 201,
+      "options": {
+        "barRadius": 0.04, "barWidth": 0.85, "fullHighlight": false, "groupWidth": 0.75,
+        "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "orientation": "auto", "showValue": "never", "stacking": "none",
+        "tooltip": { "mode": "multi", "sort": "desc" },
+        "xTickLabelRotation": 0, "xTickLabelSpacing": 100, "xField": "Uhrzeit"
+      },
+      "title": "Ø Fahrten pro Tagesstunde – Betätigungsmuster",
+      "description": "Erkennbare Peaks: Arbeitsbeginn (~7–9 Uhr), Mittagspause (~11:30–13 Uhr), Feierabend (~16–18 Uhr).",
+      "type": "barchart",
+      "targets": [{
+        "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+        "format": "table", "rawQuery": true,
+        "rawSql": "SELECT LPAD(hour_of_day::text, 2, '0') || ':00' AS \"Uhrzeit\", ROUND(SUM(CASE WHEN elevator_name = 'Aufzug links L-Bau'     THEN avg_trips_per_hour ELSE 0 END)::numeric, 2) AS \"Links L-Bau\", ROUND(SUM(CASE WHEN elevator_name = 'Aufzug rechts L-Bau'    THEN avg_trips_per_hour ELSE 0 END)::numeric, 2) AS \"Rechts L-Bau\", ROUND(SUM(CASE WHEN elevator_name = 'Campus Brücken HN West' THEN avg_trips_per_hour ELSE 0 END)::numeric, 2) AS \"Campus HN\", ROUND(SUM(CASE WHEN elevator_name = 'Feuerwehraufzug L-Bau'  THEN avg_trips_per_hour ELSE 0 END)::numeric, 2) AS \"Feuerwehr\" FROM v_hourly_pattern WHERE elevator_name IN ($elevator) GROUP BY hour_of_day ORDER BY hour_of_day",
+        "refId": "A"
+      }]
+    },
+
+    {
+      "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "fillOpacity": 80, "gradientMode": "opacity", "lineWidth": 0,
+            "hideFrom": { "legend": false, "tooltip": false, "viz": false } },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] },
+          "unit": "short"
+        },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "Links L-Bau" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "#06B6D4", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "Rechts L-Bau" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "#8B5CF6", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "Campus HN" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "#F97316", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "Feuerwehr" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "#EF4444", "mode": "fixed" } }] }
+        ]
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+      "id": 202,
+      "options": {
+        "barRadius": 0.04, "barWidth": 0.85, "fullHighlight": false, "groupWidth": 0.75,
+        "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "orientation": "auto", "showValue": "never", "stacking": "none",
+        "tooltip": { "mode": "multi", "sort": "desc" },
+        "xTickLabelRotation": 0, "xTickLabelSpacing": 0, "xField": "Wochentag"
+      },
+      "title": "Ø Fahrten pro Wochentag",
+      "description": "Montag–Freitag erwartet höhere Nutzung als Wochenende.",
+      "type": "barchart",
+      "targets": [{
+        "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+        "format": "table", "rawQuery": true,
+        "rawSql": "SELECT CASE day_of_week WHEN 0 THEN 'So' WHEN 1 THEN 'Mo' WHEN 2 THEN 'Di' WHEN 3 THEN 'Mi' WHEN 4 THEN 'Do' WHEN 5 THEN 'Fr' WHEN 6 THEN 'Sa' END AS \"Wochentag\", ROUND(SUM(CASE WHEN elevator_name = 'Aufzug links L-Bau'     THEN avg_trips_per_day ELSE 0 END)::numeric, 1) AS \"Links L-Bau\", ROUND(SUM(CASE WHEN elevator_name = 'Aufzug rechts L-Bau'    THEN avg_trips_per_day ELSE 0 END)::numeric, 1) AS \"Rechts L-Bau\", ROUND(SUM(CASE WHEN elevator_name = 'Campus Brücken HN West' THEN avg_trips_per_day ELSE 0 END)::numeric, 1) AS \"Campus HN\", ROUND(SUM(CASE WHEN elevator_name = 'Feuerwehraufzug L-Bau'  THEN avg_trips_per_day ELSE 0 END)::numeric, 1) AS \"Feuerwehr\" FROM v_weekday_pattern WHERE elevator_name IN ($elevator) GROUP BY day_of_week ORDER BY day_of_week",
+        "refId": "A"
+      }]
+    },
+
+    {
+      "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "custom": { "align": "center", "cellOptions": { "type": "auto" }, "inspect": false },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Ø Fahrten" },
+            "properties": [
+              { "id": "custom.cellOptions", "value": { "type": "color-background", "mode": "gradient" } },
+              { "id": "thresholds", "value": { "mode": "absolute", "steps": [
+                { "color": "#1E3A5F", "value": null },
+                { "color": "#0369A1", "value": 2 },
+                { "color": "#06B6D4", "value": 4 },
+                { "color": "#F97316", "value": 7 }
+              ]}}
+            ]
+          }
+        ]
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+      "id": 203,
+      "options": {
+        "cellHeight": "sm",
+        "footer": { "countRows": false, "fields": "", "reducer": ["sum"], "show": false },
+        "showHeader": true,
+        "sortBy": [{ "desc": true, "displayName": "Ø Fahrten" }]
+      },
+      "title": "Top-Stunden nach Auslastung",
+      "description": "Die 10 betrieblichsten Stunden gemittelt über alle gewählten Aufzüge.",
+      "type": "table",
+      "targets": [{
+        "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+        "format": "table", "rawQuery": true,
+        "rawSql": "SELECT LPAD(hour_of_day::text, 2, '0') || ':00 Uhr' AS \"Tageszeit\", ROUND(AVG(avg_trips_per_hour)::numeric, 2) AS \"Ø Fahrten\", CASE WHEN hour_of_day BETWEEN 7 AND 9 THEN '☀️ Arbeitsbeginn' WHEN hour_of_day BETWEEN 11 AND 13 THEN '🍽️ Mittagspause' WHEN hour_of_day BETWEEN 16 AND 18 THEN '🏠 Feierabend' ELSE '' END AS \"Zeitfenster\" FROM v_hourly_pattern WHERE elevator_name IN ($elevator) GROUP BY hour_of_day ORDER BY \"Ø Fahrten\" DESC LIMIT 10",
+        "refId": "A"
+      }]
+    },
+
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 20 },
+      "id": 105,
+      "title": "🔮 Forecast & Trendprognose",
+      "type": "row"
+    },
+
+    {
+      "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisCenteredZero": false, "axisColorMode": "text", "axisLabel": "Fahrten/Tag",
+            "axisPlacement": "auto", "drawStyle": "line",
+            "fillOpacity": 18, "gradientMode": "scheme",
+            "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+            "insertNulls": false, "lineInterpolation": "smooth", "lineWidth": 2,
+            "pointSize": 4, "scaleDistribution": { "type": "linear" },
+            "showPoints": "auto", "spanNulls": false,
+            "stacking": { "group": "A", "mode": "none" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "Links L-Bau" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "#06B6D4", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "Rechts L-Bau" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "#8B5CF6", "mode": "fixed" } }] },
+          { "matcher": { "id": "byRegexp", "options": ".*Trend.*" },
+            "properties": [
+              { "id": "custom.lineStyle", "value": { "dash": [8, 6], "fill": "dash" } },
+              { "id": "custom.lineWidth", "value": 2 },
+              { "id": "custom.fillOpacity", "value": 0 }
+            ]
+          }
+        ]
+      },
+      "gridPos": { "h": 9, "w": 24, "x": 0, "y": 21 },
+      "id": 301,
+      "options": {
+        "legend": { "calcs": ["mean", "max"], "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "title": "Fahrtenverlauf & 7-Tage-Gleitender Durchschnitt",
+      "description": "Tatsächliche Tagesfahrten kombiniert mit dem 7-Tage-Trend als gestrichelte Linie.",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+          "format": "time_series", "rawQuery": true,
+          "rawSql": "SELECT date_trunc('day', time) AS \"time\", COUNT(*) AS \"Links L-Bau\" FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Aufzug links L-Bau' AND $__timeFilter(ev.time) GROUP BY 1 ORDER BY 1",
+          "refId": "A"
+        },
+        {
+          "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+          "format": "time_series", "rawQuery": true,
+          "rawSql": "SELECT day AS \"time\", ROUND(AVG(cnt) OVER (ORDER BY day ROWS BETWEEN 6 PRECEDING AND CURRENT ROW)::numeric, 1) AS \"7-Tage-Trend (Links)\" FROM (SELECT date_trunc('day', time) AS day, COUNT(*) AS cnt FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Aufzug links L-Bau' AND $__timeFilter(ev.time) GROUP BY 1) t ORDER BY day",
+          "refId": "B"
+        },
+        {
+          "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+          "format": "time_series", "rawQuery": true,
+          "rawSql": "SELECT date_trunc('day', time) AS \"time\", COUNT(*) AS \"Rechts L-Bau\" FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Aufzug rechts L-Bau' AND $__timeFilter(ev.time) GROUP BY 1 ORDER BY 1",
+          "refId": "C"
+        },
+        {
+          "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+          "format": "time_series", "rawQuery": true,
+          "rawSql": "SELECT day AS \"time\", ROUND(AVG(cnt) OVER (ORDER BY day ROWS BETWEEN 6 PRECEDING AND CURRENT ROW)::numeric, 1) AS \"7-Tage-Trend (Rechts)\" FROM (SELECT date_trunc('day', time) AS day, COUNT(*) AS cnt FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Aufzug rechts L-Bau' AND $__timeFilter(ev.time) GROUP BY 1) t ORDER BY day",
+          "refId": "D"
+        }
+      ]
+    },
+
+    {
+      "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "fillOpacity": 80, "gradientMode": "opacity", "lineWidth": 0,
+            "hideFrom": { "legend": false, "tooltip": false, "viz": false } },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] },
+          "unit": "short"
+        },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "Links L-Bau" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "#06B6D4", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "Rechts L-Bau" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "#8B5CF6", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "Campus HN" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "#F97316", "mode": "fixed" } }] }
+        ]
+      },
+      "gridPos": { "h": 9, "w": 17, "x": 0, "y": 30 },
+      "id": 302,
+      "options": {
+        "barRadius": 0.04, "barWidth": 0.7, "fullHighlight": false, "groupWidth": 0.75,
+        "legend": { "calcs": ["mean"], "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "orientation": "auto", "showValue": "auto", "stacking": "none",
+        "tooltip": { "mode": "multi", "sort": "desc" },
+        "xTickLabelRotation": -30, "xTickLabelSpacing": 0, "xField": "Datum"
+      },
+      "title": "14-Tage-Prognose (Wochentag-Durchschnitt)",
+      "description": "Erwartete Fahrten pro Tag für die nächsten 14 Tage – unabhängig vom Dashboard-Zeitfilter, zeigt immer heute bis heute+14.",
+      "type": "barchart",
+      "targets": [{
+        "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+        "format": "table", "rawQuery": true,
+        "rawSql": "SELECT TO_CHAR(gs, 'DD.MM (Dy)') AS \"Datum\", ROUND(la.avg_per_day::numeric, 1) AS \"Links L-Bau\", ROUND(re.avg_per_day::numeric, 1) AS \"Rechts L-Bau\", ROUND(ca.avg_per_day::numeric, 1) AS \"Campus HN\" FROM generate_series(NOW()::date, NOW()::date + INTERVAL '13 days', '1 day'::interval) gs LEFT JOIN (SELECT EXTRACT(DOW FROM time)::int AS dow, COUNT(*) * 1.0 / NULLIF(COUNT(DISTINCT date_trunc('day', time)), 0) AS avg_per_day FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Aufzug links L-Bau' GROUP BY EXTRACT(DOW FROM time)::int) la ON EXTRACT(DOW FROM gs)::int = la.dow LEFT JOIN (SELECT EXTRACT(DOW FROM time)::int AS dow, COUNT(*) * 1.0 / NULLIF(COUNT(DISTINCT date_trunc('day', time)), 0) AS avg_per_day FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Aufzug rechts L-Bau' GROUP BY EXTRACT(DOW FROM time)::int) re ON EXTRACT(DOW FROM gs)::int = re.dow LEFT JOIN (SELECT EXTRACT(DOW FROM time)::int AS dow, COUNT(*) * 1.0 / NULLIF(COUNT(DISTINCT date_trunc('day', time)), 0) AS avg_per_day FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Campus Brücken HN West' GROUP BY EXTRACT(DOW FROM time)::int) ca ON EXTRACT(DOW FROM gs)::int = ca.dow ORDER BY gs",
+        "refId": "A"
+      }]
+    },
+
+    {
+      "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "mappings": [], "noValue": "—",
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "#1E3A5F", "value": null },
+            { "color": "#0369A1", "value": 3  },
+            { "color": "#06B6D4", "value": 7  },
+            { "color": "#F97316", "value": 12 }
+          ]},
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 9, "w": 7, "x": 17, "y": 30 },
+      "id": 303,
+      "options": {
+        "colorMode": "background", "graphMode": "none", "justifyMode": "center",
+        "orientation": "vertical",
+        "reduceOptions": { "calcs": ["mean"], "fields": "", "values": false },
+        "textMode": "auto"
+      },
+      "title": "Ø Erwartete Fahrten morgen",
+      "description": "Hochrechnung basierend auf dem historischen Wochentagsmuster.",
+      "type": "stat",
+      "targets": [
+        {
+          "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+          "format": "table", "rawQuery": true,
+          "rawSql": "SELECT ROUND(avg_per_day::numeric, 0) AS \"Links L-Bau\" FROM (SELECT COUNT(*) * 1.0 / NULLIF(COUNT(DISTINCT date_trunc('day', time)), 0) AS avg_per_day FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Aufzug links L-Bau' AND EXTRACT(DOW FROM time)::int = EXTRACT(DOW FROM NOW() + INTERVAL '1 day')::int) t",
+          "refId": "A"
+        },
+        {
+          "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+          "format": "table", "rawQuery": true,
+          "rawSql": "SELECT ROUND(avg_per_day::numeric, 0) AS \"Rechts L-Bau\" FROM (SELECT COUNT(*) * 1.0 / NULLIF(COUNT(DISTINCT date_trunc('day', time)), 0) AS avg_per_day FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Aufzug rechts L-Bau' AND EXTRACT(DOW FROM time)::int = EXTRACT(DOW FROM NOW() + INTERVAL '1 day')::int) t",
+          "refId": "B"
+        },
+        {
+          "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+          "format": "table", "rawQuery": true,
+          "rawSql": "SELECT ROUND(avg_per_day::numeric, 0) AS \"Campus HN\" FROM (SELECT COUNT(*) * 1.0 / NULLIF(COUNT(DISTINCT date_trunc('day', time)), 0) AS avg_per_day FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Campus Brücken HN West' AND EXTRACT(DOW FROM time)::int = EXTRACT(DOW FROM NOW() + INTERVAL '1 day')::int) t",
+          "refId": "C"
+        }
+      ]
+    },
+
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 39 },
+      "id": 106,
+      "title": "🌦️ Wetter-Korrelation (DWD Heilbronn)",
+      "type": "row"
+    },
+
+    {
+      "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "line", "fillOpacity": 15, "gradientMode": "scheme",
+            "lineInterpolation": "smooth", "lineWidth": 2,
+            "pointSize": 4, "showPoints": "auto", "spanNulls": false,
+            "stacking": { "group": "A", "mode": "none" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "Temp. Avg (C)" },
+            "properties": [
+              { "id": "color", "value": { "fixedColor": "#F97316", "mode": "fixed" } },
+              { "id": "custom.axisPlacement", "value": "right" },
+              { "id": "custom.axisLabel", "value": "Temperatur (C)" },
+              { "id": "custom.lineWidth", "value": 2 },
+              { "id": "custom.fillOpacity", "value": 0 }
+            ]
+          }
+        ]
+      },
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 40 },
+      "id": 601,
+      "options": {
+        "legend": { "calcs": ["mean", "max"], "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "none" }
+      },
+      "title": "Temperatur vs. Aufzugsfahrten",
+      "description": "Duale Achse: Fahrten/Tag je Aufzug (links) und Tagesdurchschnittstemperatur (rechts, orange). Filter steuert welche Aufzuege angezeigt werden.",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+          "format": "time_series", "rawQuery": true,
+          "rawSql": "SELECT time AS \"time\", trip_count AS \"Links L-Bau\" FROM v_elevator_weather_daily WHERE elevator_name = 'Aufzug links L-Bau' AND elevator_name IN ($elevator) AND $__timeFilter(time) ORDER BY time",
+          "refId": "A"
+        },
+        {
+          "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+          "format": "time_series", "rawQuery": true,
+          "rawSql": "SELECT time AS \"time\", trip_count AS \"Rechts L-Bau\" FROM v_elevator_weather_daily WHERE elevator_name = 'Aufzug rechts L-Bau' AND elevator_name IN ($elevator) AND $__timeFilter(time) ORDER BY time",
+          "refId": "B"
+        },
+        {
+          "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+          "format": "time_series", "rawQuery": true,
+          "rawSql": "SELECT time AS \"time\", trip_count AS \"Campus HN\" FROM v_elevator_weather_daily WHERE elevator_name = 'Campus Brücken HN West' AND elevator_name IN ($elevator) AND $__timeFilter(time) ORDER BY time",
+          "refId": "C"
+        },
+        {
+          "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+          "format": "time_series", "rawQuery": true,
+          "rawSql": "SELECT time AS \"time\", trip_count AS \"Feuerwehr\" FROM v_elevator_weather_daily WHERE elevator_name = 'Feuerwehraufzug L-Bau' AND elevator_name IN ($elevator) AND $__timeFilter(time) ORDER BY time",
+          "refId": "D"
+        },
+        {
+          "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+          "format": "time_series", "rawQuery": true,
+          "rawSql": "SELECT DISTINCT time AS \"time\", temperature_avg AS \"Temp. Avg (C)\" FROM v_elevator_weather_daily WHERE elevator_name = 'Aufzug links L-Bau' AND $__timeFilter(time) ORDER BY time",
+          "refId": "E"
+        }
+      ]
+    },
+
+    {
+      "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "line", "fillOpacity": 15, "gradientMode": "scheme",
+            "lineInterpolation": "smooth", "lineWidth": 2,
+            "pointSize": 4, "showPoints": "auto", "spanNulls": false,
+            "stacking": { "group": "A", "mode": "none" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "Niederschlag (mm)" },
+            "properties": [
+              { "id": "color", "value": { "fixedColor": "#3B82F6", "mode": "fixed" } },
+              { "id": "custom.axisPlacement", "value": "right" },
+              { "id": "custom.axisLabel", "value": "Niederschlag (mm)" },
+              { "id": "custom.drawStyle", "value": "bars" },
+              { "id": "custom.fillOpacity", "value": 60 }
+            ]
+          }
+        ]
+      },
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 40 },
+      "id": 602,
+      "options": {
+        "legend": { "calcs": ["mean", "max"], "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "none" }
+      },
+      "title": "Niederschlag vs. Aufzugsfahrten",
+      "description": "Fahrten/Tag je Aufzug (Linien) und taeglicher Niederschlag in mm (Balken, rechte Achse).",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+          "format": "time_series", "rawQuery": true,
+          "rawSql": "SELECT time AS \"time\", trip_count AS \"Links L-Bau\" FROM v_elevator_weather_daily WHERE elevator_name = 'Aufzug links L-Bau' AND elevator_name IN ($elevator) AND $__timeFilter(time) ORDER BY time",
+          "refId": "A"
+        },
+        {
+          "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+          "format": "time_series", "rawQuery": true,
+          "rawSql": "SELECT time AS \"time\", trip_count AS \"Rechts L-Bau\" FROM v_elevator_weather_daily WHERE elevator_name = 'Aufzug rechts L-Bau' AND elevator_name IN ($elevator) AND $__timeFilter(time) ORDER BY time",
+          "refId": "B"
+        },
+        {
+          "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+          "format": "time_series", "rawQuery": true,
+          "rawSql": "SELECT time AS \"time\", trip_count AS \"Campus HN\" FROM v_elevator_weather_daily WHERE elevator_name = 'Campus Brücken HN West' AND elevator_name IN ($elevator) AND $__timeFilter(time) ORDER BY time",
+          "refId": "C"
+        },
+        {
+          "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+          "format": "time_series", "rawQuery": true,
+          "rawSql": "SELECT time AS \"time\", trip_count AS \"Feuerwehr\" FROM v_elevator_weather_daily WHERE elevator_name = 'Feuerwehraufzug L-Bau' AND elevator_name IN ($elevator) AND $__timeFilter(time) ORDER BY time",
+          "refId": "D"
+        },
+        {
+          "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+          "format": "time_series", "rawQuery": true,
+          "rawSql": "SELECT DISTINCT time AS \"time\", precipitation AS \"Niederschlag (mm)\" FROM v_elevator_weather_daily WHERE elevator_name = 'Aufzug links L-Bau' AND $__timeFilter(time) ORDER BY time",
+          "refId": "E"
+        }
+      ]
+    },
+
+    {
+      "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "custom": { "align": "center", "cellOptions": { "type": "auto" }, "inspect": false },
+          "decimals": 3, "noValue": "—",
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "r Temperatur" },
+            "properties": [
+              { "id": "custom.cellOptions", "value": { "type": "color-background", "mode": "basic" } },
+              { "id": "thresholds", "value": { "mode": "absolute", "steps": [
+                { "color": "#7F1D1D", "value": null  },
+                { "color": "#B45309", "value": -0.3  },
+                { "color": "#374151", "value": -0.1  },
+                { "color": "#B45309", "value":  0.3  },
+                { "color": "#14532D", "value":  0.5  }
+              ]}}
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "r Niederschlag" },
+            "properties": [
+              { "id": "custom.cellOptions", "value": { "type": "color-background", "mode": "basic" } },
+              { "id": "thresholds", "value": { "mode": "absolute", "steps": [
+                { "color": "#7F1D1D", "value": null  },
+                { "color": "#B45309", "value": -0.3  },
+                { "color": "#374151", "value": -0.1  },
+                { "color": "#B45309", "value":  0.3  },
+                { "color": "#14532D", "value":  0.5  }
+              ]}}
+            ]
+          }
+        ]
+      },
+      "gridPos": { "h": 5, "w": 16, "x": 0, "y": 49 },
+      "id": 603,
+      "options": {
+        "cellHeight": "sm",
+        "footer": { "countRows": false, "fields": "", "reducer": ["sum"], "show": false },
+        "showHeader": true,
+        "sortBy": [{ "desc": false, "displayName": "Aufzug" }]
+      },
+      "title": "Pearson-Korrelation: Temperatur & Niederschlag vs. Fahrten",
+      "description": "Reagiert auf den Aufzug-Filter. Gruen = starke positive, Dunkelrot = starke negative Korrelation. Aussagekraeftig ab ~30 Datenpunkten.",
+      "type": "table",
+      "targets": [{
+        "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+        "format": "table", "rawQuery": true,
+        "rawSql": "SELECT elevator_name AS \"Aufzug\", corr_temperature AS \"r Temperatur\", corr_precipitation AS \"r Niederschlag\", sample_days AS \"Datenpunkte\" FROM v_weather_correlation WHERE elevator_name IN ($elevator) ORDER BY elevator_name",
+        "refId": "A"
+      }]
+    },
+
+    {
+      "content": "**Pearson r – Interpretation:**\n\n| r | Bedeutung |\n|---|---|\n| 🟢 > +0.5 | Starke positive Korrelation |\n| 🟡 +0.3 bis +0.5 | Moderate positive Korrelation |\n| ⚫ -0.3 bis +0.3 | Kein signifikanter Zusammenhang |\n| 🟡 -0.5 bis -0.3 | Moderate negative Korrelation |\n| 🔴 < -0.5 | Starke negative Korrelation |\n\n> Empfehlung: mind. 30 Tage gemeinsamer Daten.",
+      "gridPos": { "h": 5, "w": 8, "x": 16, "y": 49 },
+      "id": 605,
+      "options": { "code": { "language": "plaintext", "showLineNumbers": false, "showMiniMap": false }, "content": "**Pearson r – Interpretation:**\n\n| r | Bedeutung |\n|---|---|\n| 🟢 > +0.5 | Starke positive Korrelation |\n| 🟡 +0.3 bis +0.5 | Moderate positive Korrelation |\n| ⚫ -0.3 bis +0.3 | Kein signifikanter Zusammenhang |\n| 🟡 -0.5 bis -0.3 | Moderate negative Korrelation |\n| 🔴 < -0.5 | Starke negative Korrelation |\n\n> Empfehlung: mind. 30 Tage gemeinsamer Daten.", "mode": "markdown" },
+      "title": "",
+      "transparent": false,
+      "type": "text"
+    },
+
+    {
+      "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "fillOpacity": 80, "gradientMode": "opacity", "lineWidth": 0,
+            "hideFrom": { "legend": false, "tooltip": false, "viz": false } },
+          "mappings": [], "unit": "short",
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "Links L-Bau" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "#06B6D4", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "Rechts L-Bau" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "#8B5CF6", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "Campus HN" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "#F97316", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "Feuerwehr" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "#EF4444", "mode": "fixed" } }] }
+        ]
+      },
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 54 },
+      "id": 606,
+      "options": {
+        "barRadius": 0.04, "barWidth": 0.7, "fullHighlight": false, "groupWidth": 0.75,
+        "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "orientation": "auto", "showValue": "auto", "stacking": "none",
+        "tooltip": { "mode": "multi", "sort": "desc" },
+        "xTickLabelRotation": -15, "xTickLabelSpacing": 0, "xField": "temp_bucket"
+      },
+      "title": "Ø Fahrten/Tag nach Temperaturbereich",
+      "description": "Mehr Fahrten bei Kaelte = vermiedene Treppenwege.",
+      "type": "barchart",
+      "targets": [{
+        "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+        "format": "table", "rawQuery": true,
+        "rawSql": "SELECT temp_bucket, ROUND(SUM(CASE WHEN elevator_name = 'Aufzug links L-Bau'     THEN avg_trips_per_day ELSE 0 END)::numeric,1) AS \"Links L-Bau\", ROUND(SUM(CASE WHEN elevator_name = 'Aufzug rechts L-Bau'    THEN avg_trips_per_day ELSE 0 END)::numeric,1) AS \"Rechts L-Bau\", ROUND(SUM(CASE WHEN elevator_name = 'Campus Brücken HN West' THEN avg_trips_per_day ELSE 0 END)::numeric,1) AS \"Campus HN\", ROUND(SUM(CASE WHEN elevator_name = 'Feuerwehraufzug L-Bau'  THEN avg_trips_per_day ELSE 0 END)::numeric,1) AS \"Feuerwehr\" FROM v_trips_by_temp_bucket WHERE elevator_name IN ($elevator) GROUP BY temp_bucket ORDER BY temp_bucket",
+        "refId": "A"
+      }]
+    },
+
+    {
+      "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "fillOpacity": 80, "gradientMode": "opacity", "lineWidth": 0,
+            "hideFrom": { "legend": false, "tooltip": false, "viz": false } },
+          "mappings": [], "unit": "short",
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "Links L-Bau" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "#06B6D4", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "Rechts L-Bau" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "#3B82F6", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "Campus HN" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "#F97316", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "Feuerwehr" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "#EF4444", "mode": "fixed" } }] }
+        ]
+      },
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 54 },
+      "id": 607,
+      "options": {
+        "barRadius": 0.04, "barWidth": 0.7, "fullHighlight": false, "groupWidth": 0.75,
+        "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "orientation": "auto", "showValue": "auto", "stacking": "none",
+        "tooltip": { "mode": "multi", "sort": "desc" },
+        "xTickLabelRotation": -15, "xTickLabelSpacing": 0, "xField": "precip_bucket"
+      },
+      "title": "Ø Fahrten/Tag nach Niederschlagsmenge",
+      "description": "Mehr Regen = mehr Aufzugnutzung (Schutz vor Naesse)?",
+      "type": "barchart",
+      "targets": [{
+        "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+        "format": "table", "rawQuery": true,
+        "rawSql": "SELECT precip_bucket, ROUND(SUM(CASE WHEN elevator_name = 'Aufzug links L-Bau'     THEN avg_trips_per_day ELSE 0 END)::numeric,1) AS \"Links L-Bau\", ROUND(SUM(CASE WHEN elevator_name = 'Aufzug rechts L-Bau'    THEN avg_trips_per_day ELSE 0 END)::numeric,1) AS \"Rechts L-Bau\", ROUND(SUM(CASE WHEN elevator_name = 'Campus Brücken HN West' THEN avg_trips_per_day ELSE 0 END)::numeric,1) AS \"Campus HN\", ROUND(SUM(CASE WHEN elevator_name = 'Feuerwehraufzug L-Bau'  THEN avg_trips_per_day ELSE 0 END)::numeric,1) AS \"Feuerwehr\" FROM v_trips_by_precip_bucket WHERE elevator_name IN ($elevator) GROUP BY precip_bucket ORDER BY precip_bucket",
+        "refId": "A"
+      }]
+    }
+
+  ]
+}
