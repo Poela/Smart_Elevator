@@ -5,25 +5,36 @@
   "schemaVersion": 38,
   "version": 4,
   "refresh": "1m",
-  "time": { "from": "now-30d", "to": "now" },
+  "time": {
+    "from": "now-30d",
+    "to": "now"
+  },
   "timepicker": {},
   "timezone": "browser",
   "editable": true,
   "graphTooltip": 1,
   "fiscalYearStartMonth": 0,
   "id": null,
-  "tags": ["elevator", "overview"],
+  "tags": [
+    "elevator",
+    "overview"
+  ],
   "annotations": {
-    "list": [{
-      "builtIn": 1,
-      "datasource": { "type": "grafana", "uid": "-- Grafana --" },
-      "enable": true, "hide": true,
-      "iconColor": "rgba(0, 211, 255, 1)",
-      "name": "Annotations & Alerts",
-      "type": "dashboard"
-    }]
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
   },
-
   "links": [
     {
       "title": "📊 Übersicht",
@@ -50,388 +61,1085 @@
       "tooltip": "Empfehlungssystem & API-Live-Daten"
     }
   ],
-
   "templating": {
     "list": [
       {
-        "current": { "selected": true, "text": "Alle", "value": "$__all" },
-        "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+        "current": {
+          "selected": true,
+          "text": "Alle",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "postgres",
+          "uid": "timescaledb-elevator"
+        },
         "definition": "SELECT name FROM elevators ORDER BY name",
-        "hide": 0, "includeAll": true, "multi": true,
-        "name": "elevator", "label": "Aufzug", "options": [],
+        "hide": 0,
+        "includeAll": true,
+        "multi": true,
+        "name": "elevator",
+        "label": "Aufzug",
+        "options": [],
         "query": "SELECT name FROM elevators ORDER BY name",
-        "refresh": 1, "regex": "", "sort": 1, "type": "query"
+        "refresh": 1,
+        "regex": "",
+        "sort": 1,
+        "type": "query"
       },
       {
-        "current": { "selected": true, "text": "Tag", "value": "day" },
-        "hide": 0, "includeAll": false, "multi": false,
-        "name": "aggregation", "label": "Aggregation",
+        "current": {
+          "selected": true,
+          "text": "Tag",
+          "value": "day"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "multi": false,
+        "name": "aggregation",
+        "label": "Aggregation",
         "options": [
-          { "selected": true,  "text": "Tag",   "value": "day"   },
-          { "selected": false, "text": "Woche",  "value": "week"  },
-          { "selected": false, "text": "Monat",  "value": "month" }
+          {
+            "selected": true,
+            "text": "Tag",
+            "value": "day"
+          },
+          {
+            "selected": false,
+            "text": "Woche",
+            "value": "week"
+          },
+          {
+            "selected": false,
+            "text": "Monat",
+            "value": "month"
+          }
         ],
         "query": "day,week,month",
         "type": "custom"
       }
     ]
   },
-
   "panels": [
-
     {
-      "content": "### 📊 **Übersicht** &nbsp;&nbsp;·&nbsp;&nbsp; [📈 Analyse & Prognose →](/d/smart-elevator-analyse) &nbsp;&nbsp;·&nbsp;&nbsp; [🤖 Prädiktive Steuerung →](/d/smart-elevator-api)",
-      "gridPos": { "h": 2, "w": 24, "x": 0, "y": 0 },
+      "content": "### 📊 **Übersicht**  ·  [📈 Analyse](/d/smart-elevator-analyse)  ·  [🤖 Steuerung](/d/smart-elevator-api)  ·  [🚨 Fehler](/d/smart-elevator-errors)  ·  [🔧 Wartung](/d/smart-elevator-maintenance)  ·  [🚪 Türen](/d/smart-elevator-doors)",
+      "gridPos": {
+        "h": 2,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
       "id": 10,
-      "options": { "code": { "language": "plaintext", "showLineNumbers": false, "showMiniMap": false }, "content": "### 📊 **Übersicht** &nbsp;&nbsp;·&nbsp;&nbsp; [📈 Analyse & Prognose →](/d/smart-elevator-analyse) &nbsp;&nbsp;·&nbsp;&nbsp; [🤖 Prädiktive Steuerung →](/d/smart-elevator-api)", "mode": "markdown" },
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "### 📊 **Übersicht**  ·  [📈 Analyse](/d/smart-elevator-analyse)  ·  [🤖 Steuerung](/d/smart-elevator-api)  ·  [🚨 Fehler](/d/smart-elevator-errors)  ·  [🔧 Wartung](/d/smart-elevator-maintenance)  ·  [🚪 Türen](/d/smart-elevator-doors)",
+        "mode": "markdown"
+      },
       "title": "",
       "transparent": true,
       "type": "text"
     },
-
     {
       "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 2 },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 2
+      },
       "id": 100,
       "title": "🏢 Aktueller Status",
       "type": "row"
     },
-
     {
-      "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb-elevator"
+      },
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "fixed", "fixedColor": "#06B6D4" },
-          "mappings": [], "noValue": "N/A",
-          "thresholds": { "mode": "absolute", "steps": [{ "color": "#06B6D4", "value": null }] },
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#06B6D4"
+          },
+          "mappings": [],
+          "noValue": "N/A",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#06B6D4",
+                "value": null
+              }
+            ]
+          },
           "unit": "short"
         },
         "overrides": []
       },
-      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 3 },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 0,
+        "y": 3
+      },
       "id": 1,
       "options": {
-        "colorMode": "background", "graphMode": "none", "justifyMode": "center",
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
         "orientation": "auto",
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
         "textMode": "value"
       },
       "title": "Aufzug links L-Bau",
       "type": "stat",
-      "targets": [{
-        "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
-        "format": "table", "rawQuery": true,
-        "rawSql": "SELECT current_floor AS \"Stockwerk\" FROM v_current_floor WHERE elevator_name = 'Aufzug links L-Bau'",
-        "refId": "A"
-      }]
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT current_floor AS \"Stockwerk\" FROM v_current_floor WHERE elevator_name = 'Aufzug links L-Bau'",
+          "refId": "A"
+        }
+      ]
     },
-
     {
-      "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb-elevator"
+      },
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "fixed", "fixedColor": "#8B5CF6" },
-          "mappings": [], "noValue": "N/A",
-          "thresholds": { "mode": "absolute", "steps": [{ "color": "#8B5CF6", "value": null }] },
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#8B5CF6"
+          },
+          "mappings": [],
+          "noValue": "N/A",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#8B5CF6",
+                "value": null
+              }
+            ]
+          },
           "unit": "short"
         },
         "overrides": []
       },
-      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 3 },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 4,
+        "y": 3
+      },
       "id": 2,
       "options": {
-        "colorMode": "background", "graphMode": "none", "justifyMode": "center",
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
         "orientation": "auto",
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
         "textMode": "value"
       },
       "title": "Aufzug rechts L-Bau",
       "type": "stat",
-      "targets": [{
-        "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
-        "format": "table", "rawQuery": true,
-        "rawSql": "SELECT current_floor AS \"Stockwerk\" FROM v_current_floor WHERE elevator_name = 'Aufzug rechts L-Bau'",
-        "refId": "A"
-      }]
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT current_floor AS \"Stockwerk\" FROM v_current_floor WHERE elevator_name = 'Aufzug rechts L-Bau'",
+          "refId": "A"
+        }
+      ]
     },
-
     {
-      "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb-elevator"
+      },
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "fixed", "fixedColor": "#F97316" },
-          "mappings": [], "noValue": "N/A",
-          "thresholds": { "mode": "absolute", "steps": [{ "color": "#F97316", "value": null }] },
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#F97316"
+          },
+          "mappings": [],
+          "noValue": "N/A",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#F97316",
+                "value": null
+              }
+            ]
+          },
           "unit": "short"
         },
         "overrides": []
       },
-      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 3 },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 8,
+        "y": 3
+      },
       "id": 3,
       "options": {
-        "colorMode": "background", "graphMode": "none", "justifyMode": "center",
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
         "orientation": "auto",
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
         "textMode": "value"
       },
       "title": "Campus Brücken HN West",
       "type": "stat",
-      "targets": [{
-        "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
-        "format": "table", "rawQuery": true,
-        "rawSql": "SELECT current_floor AS \"Stockwerk\" FROM v_current_floor WHERE elevator_name = 'Campus Brücken HN West'",
-        "refId": "A"
-      }]
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT current_floor AS \"Stockwerk\" FROM v_current_floor WHERE elevator_name = 'Campus Brücken HN West'",
+          "refId": "A"
+        }
+      ]
     },
-
     {
-      "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb-elevator"
+      },
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "fixed", "fixedColor": "#EF4444" },
-          "mappings": [], "noValue": "N/A",
-          "thresholds": { "mode": "absolute", "steps": [{ "color": "#EF4444", "value": null }] },
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#EF4444"
+          },
+          "mappings": [],
+          "noValue": "N/A",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#EF4444",
+                "value": null
+              }
+            ]
+          },
           "unit": "short"
         },
         "overrides": []
       },
-      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 3 },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 12,
+        "y": 3
+      },
       "id": 4,
       "options": {
-        "colorMode": "background", "graphMode": "none", "justifyMode": "center",
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
         "orientation": "auto",
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
         "textMode": "value"
       },
       "title": "Feuerwehraufzug L-Bau",
       "type": "stat",
-      "targets": [{
-        "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
-        "format": "table", "rawQuery": true,
-        "rawSql": "SELECT current_floor AS \"Stockwerk\" FROM v_current_floor WHERE elevator_name = 'Feuerwehraufzug L-Bau'",
-        "refId": "A"
-      }]
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT current_floor AS \"Stockwerk\" FROM v_current_floor WHERE elevator_name = 'Feuerwehraufzug L-Bau'",
+          "refId": "A"
+        }
+      ]
     },
-
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb-elevator"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#10B981"
+          },
+          "mappings": [],
+          "noValue": "N/A",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#10B981",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 16,
+        "y": 3
+      },
+      "id": 11,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value"
+      },
+      "title": "Campus Brücken HN Ost",
+      "type": "stat",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT current_floor AS \"Stockwerk\" FROM v_current_floor WHERE elevator_name = 'Campus Brücken HN Ost'",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb-elevator"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#FBBF24"
+          },
+          "mappings": [],
+          "noValue": "N/A",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#FBBF24",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 20,
+        "y": 3
+      },
+      "id": 12,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value"
+      },
+      "title": "Teststand lipah",
+      "type": "stat",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT current_floor AS \"Stockwerk\" FROM v_current_floor WHERE elevator_name = 'Teststand lipah Aufzüge Heilbronn'",
+          "refId": "A"
+        }
+      ]
+    },
     {
       "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 7 },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 7
+      },
       "id": 101,
       "title": "📈 Stockwerksverlauf",
       "type": "row"
     },
-
     {
-      "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb-elevator"
+      },
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "palette-classic" },
+          "color": {
+            "mode": "palette-classic"
+          },
           "custom": {
-            "axisCenteredZero": false, "axisColorMode": "text", "axisLabel": "Stockwerk",
-            "axisPlacement": "auto", "drawStyle": "line",
-            "fillOpacity": 20, "gradientMode": "scheme",
-            "hideFrom": { "legend": false, "tooltip": false, "viz": false },
-            "insertNulls": false, "lineInterpolation": "smooth", "lineWidth": 2,
-            "pointSize": 4, "scaleDistribution": { "type": "linear" },
-            "showPoints": "auto", "spanNulls": false,
-            "stacking": { "group": "A", "mode": "none" },
-            "thresholdsStyle": { "mode": "off" }
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "Stockwerk",
+            "axisPlacement": "auto",
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "gradientMode": "scheme",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 4,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
           },
           "mappings": [],
-          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
         },
         "overrides": [
-          { "matcher": { "id": "byName", "options": "Aufzug links L-Bau" },
-            "properties": [{ "id": "color", "value": { "fixedColor": "#06B6D4", "mode": "fixed" } }] },
-          { "matcher": { "id": "byName", "options": "Aufzug rechts L-Bau" },
-            "properties": [{ "id": "color", "value": { "fixedColor": "#8B5CF6", "mode": "fixed" } }] },
-          { "matcher": { "id": "byName", "options": "Campus Brücken HN West" },
-            "properties": [{ "id": "color", "value": { "fixedColor": "#F97316", "mode": "fixed" } }] },
-          { "matcher": { "id": "byName", "options": "Feuerwehraufzug L-Bau" },
-            "properties": [{ "id": "color", "value": { "fixedColor": "#EF4444", "mode": "fixed" } }] }
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Aufzug links L-Bau"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#06B6D4",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Aufzug rechts L-Bau"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#8B5CF6",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Campus Brücken HN West"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#F97316",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Feuerwehraufzug L-Bau"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#EF4444",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Campus Brücken HN Ost"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#10B981",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Teststand lipah"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#FBBF24",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
         ]
       },
-      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 8 },
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 8
+      },
       "id": 5,
       "options": {
-        "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
-        "tooltip": { "mode": "multi", "sort": "none" }
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
       },
       "title": "Stockwerksverlauf aller Aufzüge",
       "type": "timeseries",
       "targets": [
         {
-          "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
-          "format": "time_series", "rawQuery": true,
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
           "rawSql": "SELECT time AS \"time\", floor AS \"Aufzug links L-Bau\" FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Aufzug links L-Bau' AND $__timeFilter(ev.time) ORDER BY time",
           "refId": "A"
         },
         {
-          "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
-          "format": "time_series", "rawQuery": true,
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
           "rawSql": "SELECT time AS \"time\", floor AS \"Aufzug rechts L-Bau\" FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Aufzug rechts L-Bau' AND $__timeFilter(ev.time) ORDER BY time",
           "refId": "B"
         },
         {
-          "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
-          "format": "time_series", "rawQuery": true,
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
           "rawSql": "SELECT time AS \"time\", floor AS \"Campus Brücken HN West\" FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Campus Brücken HN West' AND $__timeFilter(ev.time) ORDER BY time",
           "refId": "C"
         },
         {
-          "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
-          "format": "time_series", "rawQuery": true,
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
           "rawSql": "SELECT time AS \"time\", floor AS \"Feuerwehraufzug L-Bau\" FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Feuerwehraufzug L-Bau' AND $__timeFilter(ev.time) ORDER BY time",
           "refId": "D"
+        },
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT time AS \"time\", floor AS \"Campus Brücken HN Ost\" FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Campus Brücken HN Ost' AND $__timeFilter(ev.time) ORDER BY time",
+          "refId": "E"
+        },
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT time AS \"time\", floor AS \"Teststand lipah\" FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Teststand lipah Aufzüge Heilbronn' AND $__timeFilter(ev.time) ORDER BY time",
+          "refId": "F"
         }
       ]
     },
-
     {
       "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 18 },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 18
+      },
       "id": 102,
       "title": "📊 Nutzungsanalyse",
       "type": "row"
     },
-
     {
-      "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb-elevator"
+      },
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "palette-classic" },
+          "color": {
+            "mode": "palette-classic"
+          },
           "custom": {
-            "axisCenteredZero": false, "axisColorMode": "text", "axisLabel": "Fahrten",
-            "axisPlacement": "auto", "drawStyle": "bars",
-            "fillOpacity": 80, "gradientMode": "opacity",
-            "hideFrom": { "legend": false, "tooltip": false, "viz": false },
-            "lineWidth": 0, "scaleDistribution": { "type": "linear" },
-            "showPoints": "never", "spanNulls": false,
-            "stacking": { "group": "A", "mode": "normal" },
-            "thresholdsStyle": { "mode": "off" }
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "Fahrten",
+            "axisPlacement": "auto",
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "gradientMode": "opacity",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 0,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
           },
           "mappings": [],
-          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
         },
         "overrides": [
-          { "matcher": { "id": "byName", "options": "Aufzug links L-Bau" },
-            "properties": [{ "id": "color", "value": { "fixedColor": "#06B6D4", "mode": "fixed" } }] },
-          { "matcher": { "id": "byName", "options": "Aufzug rechts L-Bau" },
-            "properties": [{ "id": "color", "value": { "fixedColor": "#8B5CF6", "mode": "fixed" } }] },
-          { "matcher": { "id": "byName", "options": "Feuerwehraufzug L-Bau" },
-            "properties": [{ "id": "color", "value": { "fixedColor": "#EF4444", "mode": "fixed" } }] }
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Aufzug links L-Bau"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#06B6D4",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Aufzug rechts L-Bau"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#8B5CF6",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Feuerwehraufzug L-Bau"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#EF4444",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
         ]
       },
-      "gridPos": { "h": 9, "w": 14, "x": 0, "y": 19 },
+      "gridPos": {
+        "h": 9,
+        "w": 14,
+        "x": 0,
+        "y": 19
+      },
       "id": 6,
       "options": {
-        "legend": { "calcs": ["sum"], "displayMode": "list", "placement": "bottom", "showLegend": true },
-        "tooltip": { "mode": "multi", "sort": "desc" }
+        "legend": {
+          "calcs": [
+            "sum"
+          ],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
       },
       "title": "Fahrten pro $aggregation",
       "type": "timeseries",
       "targets": [
         {
-          "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
-          "format": "time_series", "rawQuery": true,
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
           "rawSql": "SELECT date_trunc('$aggregation', time) AS \"time\", COUNT(*) AS \"Aufzug links L-Bau\" FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Aufzug links L-Bau' AND $__timeFilter(ev.time) GROUP BY 1 ORDER BY 1",
           "refId": "A"
         },
         {
-          "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
-          "format": "time_series", "rawQuery": true,
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
           "rawSql": "SELECT date_trunc('$aggregation', time) AS \"time\", COUNT(*) AS \"Aufzug rechts L-Bau\" FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Aufzug rechts L-Bau' AND $__timeFilter(ev.time) GROUP BY 1 ORDER BY 1",
           "refId": "B"
         },
         {
-          "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
-          "format": "time_series", "rawQuery": true,
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
           "rawSql": "SELECT date_trunc('$aggregation', time) AS \"time\", COUNT(*) AS \"Feuerwehraufzug L-Bau\" FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Feuerwehraufzug L-Bau' AND $__timeFilter(ev.time) GROUP BY 1 ORDER BY 1",
           "refId": "C"
+        },
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT date_trunc('$aggregation', time) AS \"time\", COUNT(*) AS \"Campus Brücken HN Ost\" FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Campus Brücken HN Ost' AND $__timeFilter(ev.time) GROUP BY 1 ORDER BY 1",
+          "refId": "D"
+        },
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT date_trunc('$aggregation', time) AS \"time\", COUNT(*) AS \"Teststand lipah\" FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Teststand lipah Aufzüge Heilbronn' AND $__timeFilter(ev.time) GROUP BY 1 ORDER BY 1",
+          "refId": "E"
         }
       ]
     },
-
     {
-      "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb-elevator"
+      },
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "fixed", "fixedColor": "#8B5CF6" },
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#8B5CF6"
+          },
           "custom": {
-            "fillOpacity": 80, "gradientMode": "opacity", "lineWidth": 1,
-            "hideFrom": { "legend": false, "tooltip": false, "viz": false }
+            "fillOpacity": 80,
+            "gradientMode": "opacity",
+            "lineWidth": 1,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
           },
           "mappings": [],
-          "thresholds": { "mode": "absolute", "steps": [{ "color": "#8B5CF6", "value": null }] }
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#8B5CF6",
+                "value": null
+              }
+            ]
+          }
         },
         "overrides": []
       },
-      "gridPos": { "h": 9, "w": 10, "x": 14, "y": 19 },
+      "gridPos": {
+        "h": 9,
+        "w": 10,
+        "x": 14,
+        "y": 19
+      },
       "id": 7,
       "options": {
-        "barRadius": 0.06, "barWidth": 0.7, "fullHighlight": false, "groupWidth": 0.7,
-        "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": false },
-        "orientation": "horizontal", "showValue": "auto", "stacking": "none",
-        "tooltip": { "mode": "single", "sort": "none" },
-        "xTickLabelRotation": 0, "xTickLabelSpacing": 100
+        "barRadius": 0.06,
+        "barWidth": 0.7,
+        "fullHighlight": false,
+        "groupWidth": 0.7,
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "orientation": "horizontal",
+        "showValue": "auto",
+        "stacking": "none",
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        },
+        "xTickLabelRotation": 0,
+        "xTickLabelSpacing": 100
       },
       "title": "Stockwerk-Häufigkeit (L-Bau gesamt)",
       "type": "barchart",
-      "targets": [{
-        "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
-        "format": "table", "rawQuery": true,
-        "rawSql": "SELECT floor::text AS \"Stockwerk\", SUM(visits) AS \"Besuche\" FROM v_floor_frequency WHERE elevator_name != 'Campus Brücken HN West' GROUP BY floor ORDER BY floor::int",
-        "refId": "A"
-      }]
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT floor::text AS \"Stockwerk\", SUM(visits) AS \"Besuche\" FROM v_floor_frequency WHERE elevator_name != 'Campus Brücken HN West' GROUP BY floor ORDER BY floor::int",
+          "refId": "A"
+        }
+      ]
     },
-
     {
       "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 28 },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 28
+      },
       "id": 103,
       "title": "🗂️ Status-Übersicht",
       "type": "row"
     },
-
     {
-      "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb-elevator"
+      },
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "thresholds" },
-          "custom": { "align": "auto", "cellOptions": { "type": "auto" }, "inspect": false },
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
           "mappings": [],
-          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
         },
         "overrides": [
           {
-            "matcher": { "id": "byName", "options": "Stockwerk" },
+            "matcher": {
+              "id": "byName",
+              "options": "Stockwerk"
+            },
             "properties": [
-              { "id": "custom.cellOptions", "value": { "type": "color-background", "mode": "basic" } },
-              { "id": "thresholds", "value": { "mode": "absolute", "steps": [
-                { "color": "#06B6D4", "value": null },
-                { "color": "#10B981", "value": 0 }
-              ]}}
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background",
+                  "mode": "basic"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "#06B6D4",
+                      "value": null
+                    },
+                    {
+                      "color": "#10B981",
+                      "value": 0
+                    }
+                  ]
+                }
+              }
             ]
           }
         ]
       },
-      "gridPos": { "h": 6, "w": 24, "x": 0, "y": 29 },
+      "gridPos": {
+        "h": 6,
+        "w": 24,
+        "x": 0,
+        "y": 29
+      },
       "id": 8,
       "options": {
         "cellHeight": "sm",
-        "footer": { "countRows": false, "fields": "", "reducer": ["sum"], "show": false },
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
         "showHeader": true,
-        "sortBy": [{ "desc": false, "displayName": "Aufzug" }]
+        "sortBy": [
+          {
+            "desc": false,
+            "displayName": "Aufzug"
+          }
+        ]
       },
       "title": "Letzter bekannter Status pro Aufzug",
       "type": "table",
-      "targets": [{
-        "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
-        "format": "table", "rawQuery": true,
-        "rawSql": "SELECT elevator_name AS \"Aufzug\", location AS \"Standort\", current_floor AS \"Stockwerk\", to_char(last_seen AT TIME ZONE 'Europe/Berlin', 'DD.MM.YYYY HH24:MI:SS') AS \"Zuletzt gesehen\" FROM v_current_floor ORDER BY elevator_name",
-        "refId": "A"
-      }]
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT elevator_name AS \"Aufzug\", location AS \"Standort\", current_floor AS \"Stockwerk\", to_char(last_seen AT TIME ZONE 'Europe/Berlin', 'DD.MM.YYYY HH24:MI:SS') AS \"Zuletzt gesehen\" FROM v_current_floor ORDER BY elevator_name",
+          "refId": "A"
+        }
+      ]
     }
-
   ]
 }

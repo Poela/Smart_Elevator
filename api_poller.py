@@ -248,7 +248,7 @@ def get_connection() -> psycopg2.extensions.connection:
 # ── Hilfsfunktion: Umgebungsvariablen in Config-Werten expandieren ────────────
 def expand_env(value: str) -> str:
     """Expandiert ${VAR_NAME} in Konfig-Strings."""
-    return re.sub(r"\$\{([^}]+)\}", lambda m: os.getenv(m.group(1), ""), str(value))
+    return re.sub(r"[$][{]([^}]+)[}]", lambda m: os.getenv(m.group(1), ""), str(value))
 
 
 # ── Dead-Letter Queue ─────────────────────────────────────────────────────────
@@ -312,18 +312,38 @@ def fetch_with_retry(url: str, headers: dict, timeout: float, source_name: str) 
             # Als transient klassifizieren → Retry durch Tenacity
             raise httpx.RequestError(f"Transient HTTP {response.status_code}")
         response.raise_for_status()
-        return response.json()
+        data = response.json()
+        # Einzelobjekt (z. B. /controllers/{id}) → in Liste einwickeln
+        return data if isinstance(data, list) else [data]
 
     return _do_request()
 
 
+# ── Verschachtelter Feldzugriff (Dot-Notation) ───────────────────────────────
+def _get_nested(item: dict, path: str) -> Any:
+    """Liest verschachtelte Felder per Dot-Notation, z. B. 'liftStatus.car.floor'."""
+    val: Any = item
+    for key in path.split("."):
+        if not isinstance(val, dict):
+            return None
+        val = val.get(key)
+    return val
+
+
 # ── Feld-Mapping (config-driven) ──────────────────────────────────────────────
 def map_response(raw: list, mapping: dict) -> list[dict]:
-    """Mappt API-Felder auf interne Struktur anhand der Config."""
+    """Mappt API-Felder auf interne Struktur anhand der Config.
+
+    Unterstützt Dot-Notation für verschachtelte Felder,
+    z. B. 'liftStatus.car.floor'.
+    Optional: 'elevator_name_override' überschreibt den API-Namen mit
+    einem festen DB-Namen (nützlich wenn API- und DB-Name abweichen).
+    """
+    override = mapping.get("elevator_name_override")
     result = []
     for item in raw:
-        name  = item.get(mapping.get("elevator_name", "name"))
-        floor = item.get(mapping.get("floor", "currentFloor"))
+        name  = override if override else _get_nested(item, mapping.get("elevator_name", "name"))
+        floor = _get_nested(item, mapping.get("floor", "currentFloor"))
         if name is not None and floor is not None:
             try:
                 result.append({"elevator_name": str(name), "floor": int(floor)})

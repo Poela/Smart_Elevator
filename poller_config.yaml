@@ -1,38 +1,63 @@
 # ============================================================
 # Elevator Poller – Config-driven Ingest
 # ============================================================
-# Neue Endpunkte / Sensoren werden hier ergänzt – kein Code-Change nötig.
-# Umgebungsvariablen werden als ${VAR_NAME} referenziert.
+# Neue Endpunkte werden hier ergänzt – kein Code-Change nötig.
+# Umgebungsvariablen werden als ${VAR_NAME} aus der .env geladen.
 #
-# Scheduling-Konzept (Begründung der Intervalle):
-#   60 s  – Hauptaufzüge: relevante Positionsdaten für Predictive Control,
-#            kurze Latenz wichtig für Echtzeitdarstellung in Grafana.
-#   120 s – Campus/Brücke: geringeres Aufkommen, längeres Intervall
-#            reduziert Last auf API und DB.
-#   Zeitzonen: APScheduler führt alle Trigger-Zeiten in UTC aus;
-#              die Konfiguration gilt als Europe/Berlin-Wallclock.
-#              Bei Sommer-/Winterzeitumstellung bleibt das Intervall stabil.
+# Elevision-Endpunkt pro Controller:
+#   GET /publicapi/controllers/{id}
+#   → liftStatus.car.floor  = aktuelles Stockwerk
+#   → liftStatus.car.driveState = REST | DRIVE | LANDING | …
 # ============================================================
 
 sources:
 
-  - name: "Aufzüge L-Bau"
-    url: "${ELEVATOR_API_URL}"
-    api_key: "${ELEVATOR_API_KEY}"        # leer lassen wenn keine Auth nötig
-    poll_interval_sec: 60                 # alle 60 Sekunden pollen
-    timeout_sec: 10                       # Request-Timeout
-    rate_limit_rps: 1.0                   # max. 1 Request/Sekunde (Fairness)
+  # ID 242600 – Campus Brücken HN West beim L Bau (verbunden)
+  # elevator_name_override: API-Name weicht vom DB-Namen ab → fixer Override
+  - name: "Campus Brücken HN West beim L Bau"
+    url: "${ELEVISION_API_BASE}/publicapi/controllers/242600"
+    api_key: "${ELEVISION_JWT_TOKEN}"
+    poll_interval_sec: 60
+    timeout_sec: 10
+    rate_limit_rps: 1.0
     field_mapping:
-      elevator_name: "name"              # API-Feld → interner Name
-      floor: "currentFloor"              # API-Feld → Stockwerk
+      elevator_name: "name"
+      elevator_name_override: "Campus Brücken HN West"
+      floor: "liftStatus.car.floor"
 
-  # Beispiel: zweite unabhängige Quelle mit anderem Intervall
-  # - name: "Campus Brücken HN West"
-  #   url: "${CAMPUS_API_URL}"
-  #   api_key: "${CAMPUS_API_KEY}"
-  #   poll_interval_sec: 120
-  #   timeout_sec: 15
-  #   rate_limit_rps: 0.5
+  # ID 242601 – Campus Brücken HN Ost (verbunden)
+  - name: "Campus Brücken HN Ost"
+    url: "${ELEVISION_API_BASE}/publicapi/controllers/242601"
+    api_key: "${ELEVISION_JWT_TOKEN}"
+    poll_interval_sec: 60
+    timeout_sec: 10
+    rate_limit_rps: 1.0
+    field_mapping:
+      elevator_name: "name"
+      floor: "liftStatus.car.floor"
+
+  # ID 269916 – Teststand lipah Aufzüge Heilbronn (verbunden)
+  - name: "Teststand lipah Aufzüge Heilbronn"
+    url: "${ELEVISION_API_BASE}/publicapi/controllers/269916"
+    api_key: "${ELEVISION_JWT_TOKEN}"
+    poll_interval_sec: 60
+    timeout_sec: 10
+    rate_limit_rps: 1.0
+    field_mapping:
+      elevator_name: "name"
+      floor: "liftStatus.car.floor"
+
+  # ── Nicht verbunden – aktivieren sobald online ───────────────────────────
+  # ID 239959 – Gruppe FST-A  (offline, kein liftStatus verfügbar)
+  # - name: "Gruppe FST-A"
+  #   url: "${ELEVISION_API_BASE}/publicapi/controllers/239959"
+  #   api_key: "${ELEVISION_JWT_TOKEN}"
+  #   poll_interval_sec: 60
+  #   timeout_sec: 10
+  #   rate_limit_rps: 1.0
   #   field_mapping:
-  #     elevator_name: "deviceId"
-  #     floor: "level"
+  #     elevator_name: "name"
+  #     floor: "liftStatus.car.floor"
+  #
+  # ID 239960 – Gruppe FST-B (offline)
+  # ID 239961 – Gruppe FST-C (offline)
