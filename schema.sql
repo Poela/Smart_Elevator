@@ -457,6 +457,8 @@ WHERE w.temperature_avg IS NOT NULL
 GROUP BY temp_bucket, d.elevator_name
 ORDER BY temp_bucket, d.elevator_name;
 
+<<<<<<< HEAD
+=======
 -- ============================================================
 -- ML-Forecast (Prophet)
 -- ============================================================
@@ -495,6 +497,7 @@ FROM elevator_forecast
 ORDER BY time, elevator_name, forecast_date DESC;
 
 -- ── Wetter-Bucket-Analysen ──────────────────────────────────────────────────
+>>>>>>> c1b3efe3c488ba939147a211f2c6a67544c753e1
 -- Ø Fahrten pro Niederschlagsstufe (Bucket-Analyse)
 CREATE OR REPLACE VIEW v_trips_by_precip_bucket AS
 WITH daily AS (

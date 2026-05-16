@@ -20,8 +20,11 @@ pyyaml>=6.0
 apscheduler>=3.10
 prometheus_client>=0.20
 pytz>=2024
+<<<<<<< HEAD
+=======
 
 # ML-Forecast (forecast_service.py)
 lightgbm>=4.3
 scikit-learn>=1.4
 numpy>=1.26
+>>>>>>> c1b3efe3c488ba939147a211f2c6a67544c753e1

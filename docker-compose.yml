@@ -1,10 +1,19 @@
 version: "3.9"
+<<<<<<< HEAD
+services:
+  timescaledb:
+    image: timescale/timescaledb:latest-pg16
+    restart: unless-stopped
+    networks:
+      - monitoring
+=======
 
 services:
 
   timescaledb:
     image: timescale/timescaledb:latest-pg16
     restart: unless-stopped
+>>>>>>> c1b3efe3c488ba939147a211f2c6a67544c753e1
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: Test123
@@ -23,6 +32,11 @@ services:
   grafana:
     image: grafana/grafana:11.1.0
     restart: unless-stopped
+<<<<<<< HEAD
+    networks:
+      - monitoring
+=======
+>>>>>>> c1b3efe3c488ba939147a211f2c6a67544c753e1
     ports:
       - "3000:3000"
     environment:
@@ -37,6 +51,16 @@ services:
       timescaledb:
         condition: service_healthy
 
+<<<<<<< HEAD
+networks:
+  monitoring:
+    driver: bridge
+
 volumes:
   timescale_data:
   grafana_data:
+=======
+volumes:
+  timescale_data:
+  grafana_data:
+>>>>>>> c1b3efe3c488ba939147a211f2c6a67544c753e1
