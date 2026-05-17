@@ -284,11 +284,9 @@ SELECT add_continuous_aggregate_policy('ev_daily',
 );
 
 -- ------------------------------------------------------------
--- Retention Policies
+-- Retention Policies (elevator_events only – weather tables defined below)
 -- ------------------------------------------------------------
-SELECT add_retention_policy('elevator_events',     INTERVAL '1 year',  if_not_exists => TRUE);
-SELECT add_retention_policy('weather_observations', INTERVAL '3 years', if_not_exists => TRUE);
-SELECT add_retention_policy('weather_hourly',       INTERVAL '90 days', if_not_exists => TRUE);
+SELECT add_retention_policy('elevator_events', INTERVAL '1 year', if_not_exists => TRUE);
 
 -- ============================================================
 -- Wetter-Integration & Korrelationsanalyse (DWD API)
@@ -335,6 +333,10 @@ SELECT create_hypertable(
 CREATE UNIQUE INDEX IF NOT EXISTS idx_weather_hourly_unique
     ON weather_hourly (time, station_id);
 
+-- Retention Policies für Wetter-Tabellen
+SELECT add_retention_policy('weather_observations', INTERVAL '3 years', if_not_exists => TRUE);
+SELECT add_retention_policy('weather_hourly',       INTERVAL '90 days', if_not_exists => TRUE);
+
 -- Dead-Letter Queue für fehlgeschlagene API-Records
 CREATE TABLE IF NOT EXISTS elevator_events_dlq (
     id           SERIAL      PRIMARY KEY,
@@ -348,6 +350,65 @@ CREATE TABLE IF NOT EXISTS elevator_events_dlq (
 CREATE INDEX IF NOT EXISTS idx_dlq_unresolved
     ON elevator_events_dlq (attempted_at)
     WHERE resolved_at IS NULL;
+
+-- ------------------------------------------------------------
+-- API-Tabellen: Fehler, Wartung, Türen
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS elevator_errors (
+    time         TIMESTAMPTZ  NOT NULL,
+    elevator_id  INTEGER      NOT NULL REFERENCES elevators(id),
+    event_type   TEXT         NOT NULL,
+    category     TEXT,
+    floor        SMALLINT,
+    e4_id        TEXT
+);
+SELECT create_hypertable('elevator_errors','time',chunk_time_interval=>INTERVAL '1 week',if_not_exists=>TRUE);
+CREATE INDEX IF NOT EXISTS idx_elevator_errors_elevator_time ON elevator_errors (elevator_id, time DESC);
+
+CREATE TABLE IF NOT EXISTS elevator_availability (
+    time                TIMESTAMPTZ NOT NULL,
+    elevator_id         INTEGER     NOT NULL REFERENCES elevators(id),
+    availability_pct    REAL,
+    operating_category  TEXT,
+    online              BOOLEAN
+);
+SELECT create_hypertable('elevator_availability','time',chunk_time_interval=>INTERVAL '1 week',if_not_exists=>TRUE);
+CREATE INDEX IF NOT EXISTS idx_elevator_avail_elevator_time ON elevator_availability (elevator_id, time DESC);
+
+CREATE TABLE IF NOT EXISTS elevator_count_stats (
+    time              TIMESTAMPTZ NOT NULL,
+    elevator_id       INTEGER     NOT NULL REFERENCES elevators(id),
+    motor_start_up    INTEGER,
+    motor_start_down  INTEGER,
+    total_distance_mm BIGINT,
+    car_calls         INTEGER,
+    landing_calls     INTEGER
+);
+SELECT create_hypertable('elevator_count_stats','time',chunk_time_interval=>INTERVAL '1 week',if_not_exists=>TRUE);
+CREATE INDEX IF NOT EXISTS idx_elevator_count_elevator_time ON elevator_count_stats (elevator_id, time DESC);
+
+CREATE TABLE IF NOT EXISTS elevator_time_stats (
+    time        TIMESTAMPTZ NOT NULL,
+    elevator_id INTEGER     NOT NULL REFERENCES elevators(id),
+    drive_ms    BIGINT,
+    idle_ms     BIGINT,
+    loading_ms  BIGINT
+);
+SELECT create_hypertable('elevator_time_stats','time',chunk_time_interval=>INTERVAL '1 week',if_not_exists=>TRUE);
+CREATE INDEX IF NOT EXISTS idx_elevator_time_elevator_time ON elevator_time_stats (elevator_id, time DESC);
+
+CREATE TABLE IF NOT EXISTS elevator_door_stats (
+    time                  TIMESTAMPTZ NOT NULL,
+    elevator_id           INTEGER     NOT NULL REFERENCES elevators(id),
+    door                  TEXT        NOT NULL,
+    reversing_count       INTEGER,
+    photocell_activations INTEGER,
+    avg_opening_ms        REAL,
+    avg_closing_ms        REAL,
+    cycles_count          INTEGER
+);
+SELECT create_hypertable('elevator_door_stats','time',chunk_time_interval=>INTERVAL '1 week',if_not_exists=>TRUE);
+CREATE INDEX IF NOT EXISTS idx_elevator_door_elevator_time ON elevator_door_stats (elevator_id, time DESC);
 
 -- Korrektur-Log (Auditpfad für Late-Data / Korrekturen)
 -- Workflow: 1) Eintrag hier anlegen, 2) Original per UPDATE floor=new, quality_flag=1 fixen
@@ -457,21 +518,19 @@ WHERE w.temperature_avg IS NOT NULL
 GROUP BY temp_bucket, d.elevator_name
 ORDER BY temp_bucket, d.elevator_name;
 
-<<<<<<< HEAD
-=======
 -- ============================================================
 -- ML-Forecast (Prophet)
 -- ============================================================
 
 -- Forecast-Ergebnisse pro Aufzug, Modell und Generierungsdatum
 CREATE TABLE IF NOT EXISTS elevator_forecast (
-    time            TIMESTAMPTZ NOT NULL,       -- Prognose-Zeitpunkt (Tages-Mitternacht UTC)
+    time            TIMESTAMPTZ NOT NULL,
     elevator_name   TEXT        NOT NULL,
     model           TEXT        NOT NULL DEFAULT 'prophet',
-    forecast_date   DATE        NOT NULL,       -- Wann wurde diese Prognose generiert?
-    yhat            REAL,                       -- Erwartete Fahrten
-    yhat_lower      REAL,                       -- Untere Konfidenzgrenze (80 %)
-    yhat_upper      REAL                        -- Obere Konfidenzgrenze (80 %)
+    forecast_date   DATE        NOT NULL,
+    yhat            REAL,
+    yhat_lower      REAL,
+    yhat_upper      REAL
 );
 
 SELECT create_hypertable(
@@ -497,7 +556,6 @@ FROM elevator_forecast
 ORDER BY time, elevator_name, forecast_date DESC;
 
 -- ── Wetter-Bucket-Analysen ──────────────────────────────────────────────────
->>>>>>> c1b3efe3c488ba939147a211f2c6a67544c753e1
 -- Ø Fahrten pro Niederschlagsstufe (Bucket-Analyse)
 CREATE OR REPLACE VIEW v_trips_by_precip_bucket AS
 WITH daily AS (
@@ -530,3 +588,45 @@ JOIN weather_day w ON d.day = w.day
 WHERE w.precipitation IS NOT NULL
 GROUP BY precip_bucket, d.elevator_name
 ORDER BY precip_bucket, d.elevator_name;
+
+-- ── Anomalie-Erkennung (Z-Score nach Wochentag) ───────────────────────────────
+-- Erkennt statistische Ausreißer in der täglichen Fahrtenzahl.
+-- z_score > 2.0 → Ausreißer, > 1.5 → Auffällig, sonst Normal.
+CREATE OR REPLACE VIEW v_trip_anomalies AS
+WITH daily AS (
+    SELECT
+        date_trunc('day', time)::date AS ds,
+        e.name                        AS elevator_name,
+        COUNT(*)                      AS trips
+    FROM elevator_events ev
+    JOIN elevators e ON e.id = ev.elevator_id
+    GROUP BY ds, e.name
+),
+stats AS (
+    SELECT
+        elevator_name,
+        EXTRACT(DOW FROM ds::timestamp)::int AS dow,
+        AVG(trips)    AS mean_trips,
+        STDDEV(trips) AS std_trips,
+        COUNT(*)      AS sample_days
+    FROM daily
+    GROUP BY elevator_name, EXTRACT(DOW FROM ds::timestamp)::int
+    HAVING COUNT(*) >= 3
+)
+SELECT
+    d.ds::timestamptz                                                          AS time,
+    d.elevator_name,
+    d.trips,
+    ROUND(s.mean_trips::numeric, 1)                                            AS expected_trips,
+    ROUND(((d.trips - s.mean_trips) / NULLIF(s.std_trips, 0))::numeric, 2)    AS z_score,
+    CASE
+        WHEN ABS((d.trips - s.mean_trips) / NULLIF(s.std_trips, 0)) > 2.0 THEN 'Ausreißer'
+        WHEN ABS((d.trips - s.mean_trips) / NULLIF(s.std_trips, 0)) > 1.5 THEN 'Auffällig'
+        ELSE 'Normal'
+    END                                                                        AS anomaly_status
+FROM daily d
+JOIN stats s
+  ON s.elevator_name = d.elevator_name
+ AND EXTRACT(DOW FROM d.ds::timestamp)::int = s.dow
+WHERE s.std_trips IS NOT NULL AND s.std_trips > 0
+ORDER BY d.ds DESC, d.elevator_name;

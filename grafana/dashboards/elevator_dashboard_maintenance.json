@@ -1,4 +1,2264 @@
-{
+﻿{
+  "title": "Smart Elevator – Wartung & Gesundheit",
+  "uid": "smart-elevator-maintenance",
+  "description": "Verfügbarkeit, Motorstatistik, Auslastung und Predictive Maintenance KPIs",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "5m",
+  "time": {
+    "from": "now-30d",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "editable": true,
+  "graphTooltip": 1,
+  "id": null,
+  "tags": [
+    "elevator",
+    "maintenance",
+    "availability"
+  ],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": true,
+          "text": "Alle",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "postgres",
+          "uid": "timescaledb-elevator"
+        },
+        "definition": "SELECT name FROM elevators ORDER BY name",
+        "hide": 0,
+        "includeAll": true,
+        "multi": true,
+        "name": "elevator",
+        "label": "Aufzug",
+        "options": [],
+        "query": "SELECT name FROM elevators ORDER BY name",
+        "refresh": 1,
+        "sort": 1,
+        "type": "query"
+      }
+    ]
+  },
+  "panels": [
+    {
+      "content": "### [📊 Übersicht](/d/smart-elevator-v1) &nbsp;·&nbsp; [📈 Analyse](/d/smart-elevator-analyse) &nbsp;·&nbsp; [🤖 Steuerung](/d/smart-elevator-api) &nbsp;·&nbsp; [🚨 Fehler](/d/smart-elevator-errors) &nbsp;·&nbsp; 🔧 **Wartung & Gesundheit** &nbsp;·&nbsp; [🚪 Türen](/d/smart-elevator-doors)",
+      "gridPos": {
+        "h": 2,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "transparent": true,
+      "options": {
+        "mode": "markdown",
+        "content": "### [📊 Übersicht](/d/smart-elevator-v1) &nbsp;·&nbsp; [📈 Analyse](/d/smart-elevator-analyse) &nbsp;·&nbsp; [🤖 Steuerung](/d/smart-elevator-api) &nbsp;·&nbsp; [🚨 Fehler](/d/smart-elevator-errors) &nbsp;·&nbsp; 🔧 **Wartung & Gesundheit** &nbsp;·&nbsp; [🚪 Türen](/d/smart-elevator-doors)"
+      },
+      "type": "text"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 2
+      },
+      "id": 10,
+      "title": "🟢 Verfügbarkeit",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb-elevator"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#EF4444",
+                "value": null
+              },
+              {
+                "color": "#F59E0B",
+                "value": 90
+              },
+              {
+                "color": "#10B981",
+                "value": 98
+              }
+            ]
+          },
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "noValue": "—"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 0,
+        "y": 3
+      },
+      "id": 11,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "mean"
+          ]
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      },
+      "title": "Ø Verfügbarkeit im Zeitraum",
+      "type": "gauge",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT e.name AS \"Aufzug\", ROUND(AVG(availability_pct)::numeric, 1) AS \"Verfügbarkeit %\" FROM elevator_availability ea JOIN elevators e ON e.id = ea.elevator_id WHERE e.name IN ($elevator) AND $__timeFilter(ea.time) GROUP BY e.name ORDER BY e.name",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb-elevator"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "center",
+            "cellOptions": {
+              "type": "auto"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Verfügbarkeit %"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background",
+                  "mode": "gradient"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "#7F1D1D",
+                      "value": null
+                    },
+                    {
+                      "color": "#92400E",
+                      "value": 90
+                    },
+                    {
+                      "color": "#14532D",
+                      "value": 98
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Status"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background",
+                  "mode": "basic"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "NORMAL": {
+                        "color": "#10B981",
+                        "text": "✅ NORMAL"
+                      },
+                      "FAULT": {
+                        "color": "#EF4444",
+                        "text": "❌ FAULT"
+                      },
+                      "SERVICE": {
+                        "color": "#F59E0B",
+                        "text": "🔧 SERVICE"
+                      },
+                      "FUNCTIONAL": {
+                        "color": "#3B82F6",
+                        "text": "🔵 FUNCTIONAL"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 16,
+        "x": 8,
+        "y": 3
+      },
+      "id": 12,
+      "options": {
+        "cellHeight": "sm",
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": false,
+            "displayName": "Aufzug"
+          }
+        ]
+      },
+      "title": "Aktueller Status pro Aufzug",
+      "type": "table",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT DISTINCT ON (e.name) e.name AS \"Aufzug\", ROUND(availability_pct::numeric, 1) AS \"Verfügbarkeit %\", operating_category AS \"Status\", CASE WHEN online THEN '🟢 Online' ELSE '🔴 Offline' END AS \"Verbindung\", to_char(ea.time AT TIME ZONE 'Europe/Berlin', 'DD.MM. HH24:MI') AS \"Letzter Check\" FROM elevator_availability ea JOIN elevators e ON e.id = ea.elevator_id WHERE e.name IN ($elevator) ORDER BY e.name, ea.time DESC",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb-elevator"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "lineWidth": 2,
+            "lineInterpolation": "smooth",
+            "spanNulls": false
+          },
+          "unit": "percent",
+          "min": 0,
+          "max": 100
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 9
+      },
+      "id": 13,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "mean",
+            "min"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "title": "Verfügbarkeit im Zeitverlauf",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT ea.time AS \"time\", availability_pct AS metric, e.name AS metric FROM elevator_availability ea JOIN elevators e ON e.id = ea.elevator_id WHERE e.name IN ($elevator) AND $__timeFilter(ea.time) ORDER BY ea.time",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 17
+      },
+      "id": 20,
+      "title": "⚙️ Motorstatistik & Fahrten",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb-elevator"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "lineWidth": 2,
+            "lineInterpolation": "smooth"
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 18
+      },
+      "id": 21,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "sum"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "title": "Motorstarts Aufwärts vs. Abwärts",
+      "description": "Gleichgewicht der Richtungen zeigt Positionierungseffizienz.",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT cs.time AS \"time\", motor_start_up AS \"Aufwärts\", e.name FROM elevator_count_stats cs JOIN elevators e ON e.id = cs.elevator_id WHERE e.name IN ($elevator) AND $__timeFilter(cs.time) ORDER BY cs.time",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT cs.time AS \"time\", motor_start_down AS \"Abwärts\", e.name FROM elevator_count_stats cs JOIN elevators e ON e.id = cs.elevator_id WHERE e.name IN ($elevator) AND $__timeFilter(cs.time) ORDER BY cs.time",
+          "refId": "B"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb-elevator"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "lineWidth": 2,
+            "lineInterpolation": "smooth"
+          },
+          "unit": "lengthm"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 18
+      },
+      "id": 22,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "sum"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "title": "Gefahrene Distanz (kumulativ)",
+      "description": "Gesamtstrecke je Aufzug in Metern – Verschleißindikator.",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT cs.time AS \"time\", total_distance_mm / 1000.0 AS metric, e.name AS metric FROM elevator_count_stats cs JOIN elevators e ON e.id = cs.elevator_id WHERE e.name IN ($elevator) AND $__timeFilter(cs.time) ORDER BY cs.time",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 26
+      },
+      "id": 30,
+      "title": "⏱️ Zeitverteilung (Fahrt / Leerlauf / Laden)",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb-elevator"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "lineWidth": 0,
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            }
+          },
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 27
+      },
+      "id": 31,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "title": "Fahrtzeit vs. Leerlaufzeit",
+      "description": "Anteil aktiver Fahrtzeit an der Gesamtzeit.",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT ts.time AS \"time\", drive_ms AS \"Fahrtzeit\", e.name FROM elevator_time_stats ts JOIN elevators e ON e.id = ts.elevator_id WHERE e.name IN ($elevator) AND $__timeFilter(ts.time) ORDER BY ts.time",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT ts.time AS \"time\", idle_ms AS \"Leerlauf\", e.name FROM elevator_time_stats ts JOIN elevators e ON e.id = ts.elevator_id WHERE e.name IN ($elevator) AND $__timeFilter(ts.time) ORDER BY ts.time",
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT ts.time AS \"time\", loading_ms AS \"Ladezeit\", e.name FROM elevator_time_stats ts JOIN elevators e ON e.id = ts.elevator_id WHERE e.name IN ($elevator) AND $__timeFilter(ts.time) ORDER BY ts.time",
+          "refId": "C"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb-elevator"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "lineWidth": 2,
+            "lineInterpolation": "smooth"
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 27
+      },
+      "id": 32,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "sum"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "title": "Car Calls vs. Landing Calls",
+      "description": "Landing Calls = Ruf von außen, Car Calls = Stockwerkwahl im Aufzug.",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT cs.time AS \"time\", car_calls AS \"Car Calls\", e.name FROM elevator_count_stats cs JOIN elevators e ON e.id = cs.elevator_id WHERE e.name IN ($elevator) AND $__timeFilter(cs.time) ORDER BY cs.time",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT cs.time AS \"time\", landing_calls AS \"Landing Calls\", e.name FROM elevator_count_stats cs JOIN elevators e ON e.id = cs.elevator_id WHERE e.name IN ($elevator) AND $__timeFilter(cs.time) ORDER BY cs.time",
+          "refId": "B"
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 36
+      },
+      "id": 40,
+      "title": "🌦️ Korrelation: Auslastung & Wetter",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb-elevator"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "lineWidth": 2,
+            "lineInterpolation": "smooth"
+          },
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Temp. (°C)"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#F97316",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 37
+      },
+      "id": 41,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "title": "Motorstarts vs. Temperatur",
+      "description": "Weniger Starts bei Hitze = Hitzeabschaltung? Mehr bei Kälte = mehr Nutzung?",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT date_trunc('day', cs.time) AS \"time\", SUM(motor_start_up + motor_start_down) AS \"Motorstarts/Tag\" FROM elevator_count_stats cs JOIN elevators e ON e.id = cs.elevator_id WHERE e.name IN ($elevator) AND $__timeFilter(cs.time) GROUP BY 1 ORDER BY 1",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT time, temperature_avg AS \"Temp. (°C)\" FROM weather_observations WHERE {
+  "title": "Smart Elevator – Wartung & Gesundheit",
+  "uid": "smart-elevator-maintenance",
+  "description": "Verfügbarkeit, Motorstatistik, Auslastung und Predictive Maintenance KPIs",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "5m",
+  "time": {
+    "from": "now-30d",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "editable": true,
+  "graphTooltip": 1,
+  "id": null,
+  "tags": [
+    "elevator",
+    "maintenance",
+    "availability"
+  ],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": true,
+          "text": "Alle",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "postgres",
+          "uid": "timescaledb-elevator"
+        },
+        "definition": "SELECT name FROM elevators ORDER BY name",
+        "hide": 0,
+        "includeAll": true,
+        "multi": true,
+        "name": "elevator",
+        "label": "Aufzug",
+        "options": [],
+        "query": "SELECT name FROM elevators ORDER BY name",
+        "refresh": 1,
+        "sort": 1,
+        "type": "query"
+      }
+    ]
+  },
+  "panels": [
+    {
+      "content": "### [📊 Übersicht](/d/smart-elevator-v1) &nbsp;·&nbsp; [📈 Analyse](/d/smart-elevator-analyse) &nbsp;·&nbsp; [🤖 Steuerung](/d/smart-elevator-api) &nbsp;·&nbsp; [🚨 Fehler](/d/smart-elevator-errors) &nbsp;·&nbsp; 🔧 **Wartung & Gesundheit** &nbsp;·&nbsp; [🚪 Türen](/d/smart-elevator-doors)",
+      "gridPos": {
+        "h": 2,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "transparent": true,
+      "options": {
+        "mode": "markdown",
+        "content": "### [📊 Übersicht](/d/smart-elevator-v1) &nbsp;·&nbsp; [📈 Analyse](/d/smart-elevator-analyse) &nbsp;·&nbsp; [🤖 Steuerung](/d/smart-elevator-api) &nbsp;·&nbsp; [🚨 Fehler](/d/smart-elevator-errors) &nbsp;·&nbsp; 🔧 **Wartung & Gesundheit** &nbsp;·&nbsp; [🚪 Türen](/d/smart-elevator-doors)"
+      },
+      "type": "text"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 2
+      },
+      "id": 10,
+      "title": "🟢 Verfügbarkeit",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb-elevator"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#EF4444",
+                "value": null
+              },
+              {
+                "color": "#F59E0B",
+                "value": 90
+              },
+              {
+                "color": "#10B981",
+                "value": 98
+              }
+            ]
+          },
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "noValue": "—"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 0,
+        "y": 3
+      },
+      "id": 11,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "mean"
+          ]
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      },
+      "title": "Ø Verfügbarkeit im Zeitraum",
+      "type": "gauge",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT e.name AS \"Aufzug\", ROUND(AVG(availability_pct)::numeric, 1) AS \"Verfügbarkeit %\" FROM elevator_availability ea JOIN elevators e ON e.id = ea.elevator_id WHERE e.name IN ($elevator) AND $__timeFilter(ea.time) GROUP BY e.name ORDER BY e.name",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb-elevator"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "center",
+            "cellOptions": {
+              "type": "auto"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Verfügbarkeit %"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background",
+                  "mode": "gradient"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "#7F1D1D",
+                      "value": null
+                    },
+                    {
+                      "color": "#92400E",
+                      "value": 90
+                    },
+                    {
+                      "color": "#14532D",
+                      "value": 98
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Status"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background",
+                  "mode": "basic"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "NORMAL": {
+                        "color": "#10B981",
+                        "text": "✅ NORMAL"
+                      },
+                      "FAULT": {
+                        "color": "#EF4444",
+                        "text": "❌ FAULT"
+                      },
+                      "SERVICE": {
+                        "color": "#F59E0B",
+                        "text": "🔧 SERVICE"
+                      },
+                      "FUNCTIONAL": {
+                        "color": "#3B82F6",
+                        "text": "🔵 FUNCTIONAL"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 16,
+        "x": 8,
+        "y": 3
+      },
+      "id": 12,
+      "options": {
+        "cellHeight": "sm",
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": false,
+            "displayName": "Aufzug"
+          }
+        ]
+      },
+      "title": "Aktueller Status pro Aufzug",
+      "type": "table",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT DISTINCT ON (e.name) e.name AS \"Aufzug\", ROUND(availability_pct::numeric, 1) AS \"Verfügbarkeit %\", operating_category AS \"Status\", CASE WHEN online THEN '🟢 Online' ELSE '🔴 Offline' END AS \"Verbindung\", to_char(ea.time AT TIME ZONE 'Europe/Berlin', 'DD.MM. HH24:MI') AS \"Letzter Check\" FROM elevator_availability ea JOIN elevators e ON e.id = ea.elevator_id WHERE e.name IN ($elevator) ORDER BY e.name, ea.time DESC",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb-elevator"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "lineWidth": 2,
+            "lineInterpolation": "smooth",
+            "spanNulls": false
+          },
+          "unit": "percent",
+          "min": 0,
+          "max": 100
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 9
+      },
+      "id": 13,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "mean",
+            "min"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "title": "Verfügbarkeit im Zeitverlauf",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT ea.time AS \"time\", availability_pct AS metric, e.name AS metric FROM elevator_availability ea JOIN elevators e ON e.id = ea.elevator_id WHERE e.name IN ($elevator) AND $__timeFilter(ea.time) ORDER BY ea.time",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 17
+      },
+      "id": 20,
+      "title": "⚙️ Motorstatistik & Fahrten",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb-elevator"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "lineWidth": 2,
+            "lineInterpolation": "smooth"
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 18
+      },
+      "id": 21,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "sum"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "title": "Motorstarts Aufwärts vs. Abwärts",
+      "description": "Gleichgewicht der Richtungen zeigt Positionierungseffizienz.",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT cs.time AS \"time\", motor_start_up AS \"Aufwärts\", e.name FROM elevator_count_stats cs JOIN elevators e ON e.id = cs.elevator_id WHERE e.name IN ($elevator) AND $__timeFilter(cs.time) ORDER BY cs.time",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT cs.time AS \"time\", motor_start_down AS \"Abwärts\", e.name FROM elevator_count_stats cs JOIN elevators e ON e.id = cs.elevator_id WHERE e.name IN ($elevator) AND $__timeFilter(cs.time) ORDER BY cs.time",
+          "refId": "B"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb-elevator"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "lineWidth": 2,
+            "lineInterpolation": "smooth"
+          },
+          "unit": "lengthm"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 18
+      },
+      "id": 22,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "sum"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "title": "Gefahrene Distanz (kumulativ)",
+      "description": "Gesamtstrecke je Aufzug in Metern – Verschleißindikator.",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT cs.time AS \"time\", total_distance_mm / 1000.0 AS metric, e.name AS metric FROM elevator_count_stats cs JOIN elevators e ON e.id = cs.elevator_id WHERE e.name IN ($elevator) AND $__timeFilter(cs.time) ORDER BY cs.time",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 26
+      },
+      "id": 30,
+      "title": "⏱️ Zeitverteilung (Fahrt / Leerlauf / Laden)",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb-elevator"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "lineWidth": 0,
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            }
+          },
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 27
+      },
+      "id": 31,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "title": "Fahrtzeit vs. Leerlaufzeit",
+      "description": "Anteil aktiver Fahrtzeit an der Gesamtzeit.",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT ts.time AS \"time\", drive_ms AS \"Fahrtzeit\", e.name FROM elevator_time_stats ts JOIN elevators e ON e.id = ts.elevator_id WHERE e.name IN ($elevator) AND $__timeFilter(ts.time) ORDER BY ts.time",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT ts.time AS \"time\", idle_ms AS \"Leerlauf\", e.name FROM elevator_time_stats ts JOIN elevators e ON e.id = ts.elevator_id WHERE e.name IN ($elevator) AND $__timeFilter(ts.time) ORDER BY ts.time",
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT ts.time AS \"time\", loading_ms AS \"Ladezeit\", e.name FROM elevator_time_stats ts JOIN elevators e ON e.id = ts.elevator_id WHERE e.name IN ($elevator) AND $__timeFilter(ts.time) ORDER BY ts.time",
+          "refId": "C"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb-elevator"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "lineWidth": 2,
+            "lineInterpolation": "smooth"
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 27
+      },
+      "id": 32,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "sum"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "title": "Car Calls vs. Landing Calls",
+      "description": "Landing Calls = Ruf von außen, Car Calls = Stockwerkwahl im Aufzug.",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT cs.time AS \"time\", car_calls AS \"Car Calls\", e.name FROM elevator_count_stats cs JOIN elevators e ON e.id = cs.elevator_id WHERE e.name IN ($elevator) AND $__timeFilter(cs.time) ORDER BY cs.time",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT cs.time AS \"time\", landing_calls AS \"Landing Calls\", e.name FROM elevator_count_stats cs JOIN elevators e ON e.id = cs.elevator_id WHERE e.name IN ($elevator) AND $__timeFilter(cs.time) ORDER BY cs.time",
+          "refId": "B"
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 36
+      },
+      "id": 40,
+      "title": "🌦️ Korrelation: Auslastung & Wetter",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb-elevator"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "lineWidth": 2,
+            "lineInterpolation": "smooth"
+          },
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Temp. (°C)"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#F97316",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 37
+      },
+      "id": 41,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "title": "Motorstarts vs. Temperatur",
+      "description": "Weniger Starts bei Hitze = Hitzeabschaltung? Mehr bei Kälte = mehr Nutzung?",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT date_trunc('day', cs.time) AS \"time\", SUM(motor_start_up + motor_start_down) AS \"Motorstarts/Tag\" FROM elevator_count_stats cs JOIN elevators e ON e.id = cs.elevator_id WHERE e.name IN ($elevator) AND $__timeFilter(cs.time) GROUP BY 1 ORDER BY 1",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT date AS \"time\", temperature_avg AS \"Temp. (°C)\" FROM weather_observations WHERE $__timeFilter(date) ORDER BY date",
+          "refId": "B"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb-elevator"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "lineWidth": 2,
+            "lineInterpolation": "smooth"
+          },
+          "unit": "ms"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Niederschlag (mm)"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#3B82F6",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              },
+              {
+                "id": "custom.drawStyle",
+                "value": "bars"
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 60
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 37
+      },
+      "id": 42,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "title": "Leerlaufzeit vs. Niederschlag",
+      "description": "Mehr Regen = weniger Leerlauf (mehr Nutzung)?",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT date_trunc('day', ts.time) AS \"time\", AVG(idle_ms) AS \"Ø Leerlauf (ms)\" FROM elevator_time_stats ts JOIN elevators e ON e.id = ts.elevator_id WHERE e.name IN ($elevator) AND $__timeFilter(ts.time) GROUP BY 1 ORDER BY 1",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT time, precipitation AS \"Niederschlag (mm)\" FROM weather_observations WHERE {
+  "title": "Smart Elevator – Wartung & Gesundheit",
+  "uid": "smart-elevator-maintenance",
+  "description": "Verfügbarkeit, Motorstatistik, Auslastung und Predictive Maintenance KPIs",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "5m",
+  "time": {
+    "from": "now-30d",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "editable": true,
+  "graphTooltip": 1,
+  "id": null,
+  "tags": [
+    "elevator",
+    "maintenance",
+    "availability"
+  ],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": true,
+          "text": "Alle",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "postgres",
+          "uid": "timescaledb-elevator"
+        },
+        "definition": "SELECT name FROM elevators ORDER BY name",
+        "hide": 0,
+        "includeAll": true,
+        "multi": true,
+        "name": "elevator",
+        "label": "Aufzug",
+        "options": [],
+        "query": "SELECT name FROM elevators ORDER BY name",
+        "refresh": 1,
+        "sort": 1,
+        "type": "query"
+      }
+    ]
+  },
+  "panels": [
+    {
+      "content": "### [📊 Übersicht](/d/smart-elevator-v1) &nbsp;·&nbsp; [📈 Analyse](/d/smart-elevator-analyse) &nbsp;·&nbsp; [🤖 Steuerung](/d/smart-elevator-api) &nbsp;·&nbsp; [🚨 Fehler](/d/smart-elevator-errors) &nbsp;·&nbsp; 🔧 **Wartung & Gesundheit** &nbsp;·&nbsp; [🚪 Türen](/d/smart-elevator-doors)",
+      "gridPos": {
+        "h": 2,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "transparent": true,
+      "options": {
+        "mode": "markdown",
+        "content": "### [📊 Übersicht](/d/smart-elevator-v1) &nbsp;·&nbsp; [📈 Analyse](/d/smart-elevator-analyse) &nbsp;·&nbsp; [🤖 Steuerung](/d/smart-elevator-api) &nbsp;·&nbsp; [🚨 Fehler](/d/smart-elevator-errors) &nbsp;·&nbsp; 🔧 **Wartung & Gesundheit** &nbsp;·&nbsp; [🚪 Türen](/d/smart-elevator-doors)"
+      },
+      "type": "text"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 2
+      },
+      "id": 10,
+      "title": "🟢 Verfügbarkeit",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb-elevator"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#EF4444",
+                "value": null
+              },
+              {
+                "color": "#F59E0B",
+                "value": 90
+              },
+              {
+                "color": "#10B981",
+                "value": 98
+              }
+            ]
+          },
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "noValue": "—"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 0,
+        "y": 3
+      },
+      "id": 11,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "mean"
+          ]
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      },
+      "title": "Ø Verfügbarkeit im Zeitraum",
+      "type": "gauge",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT e.name AS \"Aufzug\", ROUND(AVG(availability_pct)::numeric, 1) AS \"Verfügbarkeit %\" FROM elevator_availability ea JOIN elevators e ON e.id = ea.elevator_id WHERE e.name IN ($elevator) AND $__timeFilter(ea.time) GROUP BY e.name ORDER BY e.name",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb-elevator"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "center",
+            "cellOptions": {
+              "type": "auto"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Verfügbarkeit %"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background",
+                  "mode": "gradient"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "#7F1D1D",
+                      "value": null
+                    },
+                    {
+                      "color": "#92400E",
+                      "value": 90
+                    },
+                    {
+                      "color": "#14532D",
+                      "value": 98
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Status"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background",
+                  "mode": "basic"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "NORMAL": {
+                        "color": "#10B981",
+                        "text": "✅ NORMAL"
+                      },
+                      "FAULT": {
+                        "color": "#EF4444",
+                        "text": "❌ FAULT"
+                      },
+                      "SERVICE": {
+                        "color": "#F59E0B",
+                        "text": "🔧 SERVICE"
+                      },
+                      "FUNCTIONAL": {
+                        "color": "#3B82F6",
+                        "text": "🔵 FUNCTIONAL"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 16,
+        "x": 8,
+        "y": 3
+      },
+      "id": 12,
+      "options": {
+        "cellHeight": "sm",
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": false,
+            "displayName": "Aufzug"
+          }
+        ]
+      },
+      "title": "Aktueller Status pro Aufzug",
+      "type": "table",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT DISTINCT ON (e.name) e.name AS \"Aufzug\", ROUND(availability_pct::numeric, 1) AS \"Verfügbarkeit %\", operating_category AS \"Status\", CASE WHEN online THEN '🟢 Online' ELSE '🔴 Offline' END AS \"Verbindung\", to_char(ea.time AT TIME ZONE 'Europe/Berlin', 'DD.MM. HH24:MI') AS \"Letzter Check\" FROM elevator_availability ea JOIN elevators e ON e.id = ea.elevator_id WHERE e.name IN ($elevator) ORDER BY e.name, ea.time DESC",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb-elevator"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "lineWidth": 2,
+            "lineInterpolation": "smooth",
+            "spanNulls": false
+          },
+          "unit": "percent",
+          "min": 0,
+          "max": 100
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 9
+      },
+      "id": 13,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "mean",
+            "min"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "title": "Verfügbarkeit im Zeitverlauf",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT ea.time AS \"time\", availability_pct AS metric, e.name AS metric FROM elevator_availability ea JOIN elevators e ON e.id = ea.elevator_id WHERE e.name IN ($elevator) AND $__timeFilter(ea.time) ORDER BY ea.time",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 17
+      },
+      "id": 20,
+      "title": "⚙️ Motorstatistik & Fahrten",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb-elevator"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "lineWidth": 2,
+            "lineInterpolation": "smooth"
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 18
+      },
+      "id": 21,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "sum"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "title": "Motorstarts Aufwärts vs. Abwärts",
+      "description": "Gleichgewicht der Richtungen zeigt Positionierungseffizienz.",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT cs.time AS \"time\", motor_start_up AS \"Aufwärts\", e.name FROM elevator_count_stats cs JOIN elevators e ON e.id = cs.elevator_id WHERE e.name IN ($elevator) AND $__timeFilter(cs.time) ORDER BY cs.time",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT cs.time AS \"time\", motor_start_down AS \"Abwärts\", e.name FROM elevator_count_stats cs JOIN elevators e ON e.id = cs.elevator_id WHERE e.name IN ($elevator) AND $__timeFilter(cs.time) ORDER BY cs.time",
+          "refId": "B"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb-elevator"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "lineWidth": 2,
+            "lineInterpolation": "smooth"
+          },
+          "unit": "lengthm"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 18
+      },
+      "id": 22,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "sum"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "title": "Gefahrene Distanz (kumulativ)",
+      "description": "Gesamtstrecke je Aufzug in Metern – Verschleißindikator.",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT cs.time AS \"time\", total_distance_mm / 1000.0 AS metric, e.name AS metric FROM elevator_count_stats cs JOIN elevators e ON e.id = cs.elevator_id WHERE e.name IN ($elevator) AND $__timeFilter(cs.time) ORDER BY cs.time",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 26
+      },
+      "id": 30,
+      "title": "⏱️ Zeitverteilung (Fahrt / Leerlauf / Laden)",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb-elevator"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "lineWidth": 0,
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            }
+          },
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 27
+      },
+      "id": 31,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "title": "Fahrtzeit vs. Leerlaufzeit",
+      "description": "Anteil aktiver Fahrtzeit an der Gesamtzeit.",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT ts.time AS \"time\", drive_ms AS \"Fahrtzeit\", e.name FROM elevator_time_stats ts JOIN elevators e ON e.id = ts.elevator_id WHERE e.name IN ($elevator) AND $__timeFilter(ts.time) ORDER BY ts.time",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT ts.time AS \"time\", idle_ms AS \"Leerlauf\", e.name FROM elevator_time_stats ts JOIN elevators e ON e.id = ts.elevator_id WHERE e.name IN ($elevator) AND $__timeFilter(ts.time) ORDER BY ts.time",
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT ts.time AS \"time\", loading_ms AS \"Ladezeit\", e.name FROM elevator_time_stats ts JOIN elevators e ON e.id = ts.elevator_id WHERE e.name IN ($elevator) AND $__timeFilter(ts.time) ORDER BY ts.time",
+          "refId": "C"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb-elevator"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "lineWidth": 2,
+            "lineInterpolation": "smooth"
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 27
+      },
+      "id": 32,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "sum"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "title": "Car Calls vs. Landing Calls",
+      "description": "Landing Calls = Ruf von außen, Car Calls = Stockwerkwahl im Aufzug.",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT cs.time AS \"time\", car_calls AS \"Car Calls\", e.name FROM elevator_count_stats cs JOIN elevators e ON e.id = cs.elevator_id WHERE e.name IN ($elevator) AND $__timeFilter(cs.time) ORDER BY cs.time",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT cs.time AS \"time\", landing_calls AS \"Landing Calls\", e.name FROM elevator_count_stats cs JOIN elevators e ON e.id = cs.elevator_id WHERE e.name IN ($elevator) AND $__timeFilter(cs.time) ORDER BY cs.time",
+          "refId": "B"
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 36
+      },
+      "id": 40,
+      "title": "🌦️ Korrelation: Auslastung & Wetter",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb-elevator"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "lineWidth": 2,
+            "lineInterpolation": "smooth"
+          },
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Temp. (°C)"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#F97316",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 37
+      },
+      "id": 41,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "title": "Motorstarts vs. Temperatur",
+      "description": "Weniger Starts bei Hitze = Hitzeabschaltung? Mehr bei Kälte = mehr Nutzung?",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT date_trunc('day', cs.time) AS \"time\", SUM(motor_start_up + motor_start_down) AS \"Motorstarts/Tag\" FROM elevator_count_stats cs JOIN elevators e ON e.id = cs.elevator_id WHERE e.name IN ($elevator) AND $__timeFilter(cs.time) GROUP BY 1 ORDER BY 1",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT time, temperature_avg AS \"Temp. (°C)\" FROM weather_observations WHERE {
   "title": "Smart Elevator – Wartung & Gesundheit",
   "uid": "smart-elevator-maintenance",
   "description": "Verfügbarkeit, Motorstatistik, Auslastung und Predictive Maintenance KPIs",
@@ -813,6 +3073,1846 @@
           "format": "time_series",
           "rawQuery": true,
           "rawSql": "SELECT date AS \"time\", precipitation AS \"Niederschlag (mm)\" FROM weather_observations WHERE $__timeFilter(date) ORDER BY date",
+          "refId": "B"
+        }
+      ]
+    }
+  ]
+}_timeFilter(time) ORDER BY time",
+          "refId": "B"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb-elevator"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "lineWidth": 2,
+            "lineInterpolation": "smooth"
+          },
+          "unit": "ms"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Niederschlag (mm)"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#3B82F6",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              },
+              {
+                "id": "custom.drawStyle",
+                "value": "bars"
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 60
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 37
+      },
+      "id": 42,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "title": "Leerlaufzeit vs. Niederschlag",
+      "description": "Mehr Regen = weniger Leerlauf (mehr Nutzung)?",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT date_trunc('day', ts.time) AS \"time\", AVG(idle_ms) AS \"Ø Leerlauf (ms)\" FROM elevator_time_stats ts JOIN elevators e ON e.id = ts.elevator_id WHERE e.name IN ($elevator) AND $__timeFilter(ts.time) GROUP BY 1 ORDER BY 1",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT date AS \"time\", precipitation AS \"Niederschlag (mm)\" FROM weather_observations WHERE $__timeFilter(date) ORDER BY date",
+          "refId": "B"
+        }
+      ]
+    }
+  ]
+}_timeFilter(time) ORDER BY time",
+          "refId": "B"
+        }
+      ]
+    }
+  ]
+}_timeFilter(time) ORDER BY time",
+          "refId": "B"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb-elevator"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "lineWidth": 2,
+            "lineInterpolation": "smooth"
+          },
+          "unit": "ms"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Niederschlag (mm)"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#3B82F6",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              },
+              {
+                "id": "custom.drawStyle",
+                "value": "bars"
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 60
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 37
+      },
+      "id": 42,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "title": "Leerlaufzeit vs. Niederschlag",
+      "description": "Mehr Regen = weniger Leerlauf (mehr Nutzung)?",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT date_trunc('day', ts.time) AS \"time\", AVG(idle_ms) AS \"Ø Leerlauf (ms)\" FROM elevator_time_stats ts JOIN elevators e ON e.id = ts.elevator_id WHERE e.name IN ($elevator) AND $__timeFilter(ts.time) GROUP BY 1 ORDER BY 1",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT time, precipitation AS \"Niederschlag (mm)\" FROM weather_observations WHERE {
+  "title": "Smart Elevator – Wartung & Gesundheit",
+  "uid": "smart-elevator-maintenance",
+  "description": "Verfügbarkeit, Motorstatistik, Auslastung und Predictive Maintenance KPIs",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "5m",
+  "time": {
+    "from": "now-30d",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "editable": true,
+  "graphTooltip": 1,
+  "id": null,
+  "tags": [
+    "elevator",
+    "maintenance",
+    "availability"
+  ],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": true,
+          "text": "Alle",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "postgres",
+          "uid": "timescaledb-elevator"
+        },
+        "definition": "SELECT name FROM elevators ORDER BY name",
+        "hide": 0,
+        "includeAll": true,
+        "multi": true,
+        "name": "elevator",
+        "label": "Aufzug",
+        "options": [],
+        "query": "SELECT name FROM elevators ORDER BY name",
+        "refresh": 1,
+        "sort": 1,
+        "type": "query"
+      }
+    ]
+  },
+  "panels": [
+    {
+      "content": "### [📊 Übersicht](/d/smart-elevator-v1) &nbsp;·&nbsp; [📈 Analyse](/d/smart-elevator-analyse) &nbsp;·&nbsp; [🤖 Steuerung](/d/smart-elevator-api) &nbsp;·&nbsp; [🚨 Fehler](/d/smart-elevator-errors) &nbsp;·&nbsp; 🔧 **Wartung & Gesundheit** &nbsp;·&nbsp; [🚪 Türen](/d/smart-elevator-doors)",
+      "gridPos": {
+        "h": 2,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "transparent": true,
+      "options": {
+        "mode": "markdown",
+        "content": "### [📊 Übersicht](/d/smart-elevator-v1) &nbsp;·&nbsp; [📈 Analyse](/d/smart-elevator-analyse) &nbsp;·&nbsp; [🤖 Steuerung](/d/smart-elevator-api) &nbsp;·&nbsp; [🚨 Fehler](/d/smart-elevator-errors) &nbsp;·&nbsp; 🔧 **Wartung & Gesundheit** &nbsp;·&nbsp; [🚪 Türen](/d/smart-elevator-doors)"
+      },
+      "type": "text"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 2
+      },
+      "id": 10,
+      "title": "🟢 Verfügbarkeit",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb-elevator"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#EF4444",
+                "value": null
+              },
+              {
+                "color": "#F59E0B",
+                "value": 90
+              },
+              {
+                "color": "#10B981",
+                "value": 98
+              }
+            ]
+          },
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "noValue": "—"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 0,
+        "y": 3
+      },
+      "id": 11,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "mean"
+          ]
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      },
+      "title": "Ø Verfügbarkeit im Zeitraum",
+      "type": "gauge",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT e.name AS \"Aufzug\", ROUND(AVG(availability_pct)::numeric, 1) AS \"Verfügbarkeit %\" FROM elevator_availability ea JOIN elevators e ON e.id = ea.elevator_id WHERE e.name IN ($elevator) AND $__timeFilter(ea.time) GROUP BY e.name ORDER BY e.name",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb-elevator"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "center",
+            "cellOptions": {
+              "type": "auto"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Verfügbarkeit %"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background",
+                  "mode": "gradient"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "#7F1D1D",
+                      "value": null
+                    },
+                    {
+                      "color": "#92400E",
+                      "value": 90
+                    },
+                    {
+                      "color": "#14532D",
+                      "value": 98
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Status"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background",
+                  "mode": "basic"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "NORMAL": {
+                        "color": "#10B981",
+                        "text": "✅ NORMAL"
+                      },
+                      "FAULT": {
+                        "color": "#EF4444",
+                        "text": "❌ FAULT"
+                      },
+                      "SERVICE": {
+                        "color": "#F59E0B",
+                        "text": "🔧 SERVICE"
+                      },
+                      "FUNCTIONAL": {
+                        "color": "#3B82F6",
+                        "text": "🔵 FUNCTIONAL"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 16,
+        "x": 8,
+        "y": 3
+      },
+      "id": 12,
+      "options": {
+        "cellHeight": "sm",
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": false,
+            "displayName": "Aufzug"
+          }
+        ]
+      },
+      "title": "Aktueller Status pro Aufzug",
+      "type": "table",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT DISTINCT ON (e.name) e.name AS \"Aufzug\", ROUND(availability_pct::numeric, 1) AS \"Verfügbarkeit %\", operating_category AS \"Status\", CASE WHEN online THEN '🟢 Online' ELSE '🔴 Offline' END AS \"Verbindung\", to_char(ea.time AT TIME ZONE 'Europe/Berlin', 'DD.MM. HH24:MI') AS \"Letzter Check\" FROM elevator_availability ea JOIN elevators e ON e.id = ea.elevator_id WHERE e.name IN ($elevator) ORDER BY e.name, ea.time DESC",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb-elevator"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "lineWidth": 2,
+            "lineInterpolation": "smooth",
+            "spanNulls": false
+          },
+          "unit": "percent",
+          "min": 0,
+          "max": 100
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 9
+      },
+      "id": 13,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "mean",
+            "min"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "title": "Verfügbarkeit im Zeitverlauf",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT ea.time AS \"time\", availability_pct AS metric, e.name AS metric FROM elevator_availability ea JOIN elevators e ON e.id = ea.elevator_id WHERE e.name IN ($elevator) AND $__timeFilter(ea.time) ORDER BY ea.time",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 17
+      },
+      "id": 20,
+      "title": "⚙️ Motorstatistik & Fahrten",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb-elevator"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "lineWidth": 2,
+            "lineInterpolation": "smooth"
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 18
+      },
+      "id": 21,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "sum"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "title": "Motorstarts Aufwärts vs. Abwärts",
+      "description": "Gleichgewicht der Richtungen zeigt Positionierungseffizienz.",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT cs.time AS \"time\", motor_start_up AS \"Aufwärts\", e.name FROM elevator_count_stats cs JOIN elevators e ON e.id = cs.elevator_id WHERE e.name IN ($elevator) AND $__timeFilter(cs.time) ORDER BY cs.time",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT cs.time AS \"time\", motor_start_down AS \"Abwärts\", e.name FROM elevator_count_stats cs JOIN elevators e ON e.id = cs.elevator_id WHERE e.name IN ($elevator) AND $__timeFilter(cs.time) ORDER BY cs.time",
+          "refId": "B"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb-elevator"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "lineWidth": 2,
+            "lineInterpolation": "smooth"
+          },
+          "unit": "lengthm"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 18
+      },
+      "id": 22,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "sum"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "title": "Gefahrene Distanz (kumulativ)",
+      "description": "Gesamtstrecke je Aufzug in Metern – Verschleißindikator.",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT cs.time AS \"time\", total_distance_mm / 1000.0 AS metric, e.name AS metric FROM elevator_count_stats cs JOIN elevators e ON e.id = cs.elevator_id WHERE e.name IN ($elevator) AND $__timeFilter(cs.time) ORDER BY cs.time",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 26
+      },
+      "id": 30,
+      "title": "⏱️ Zeitverteilung (Fahrt / Leerlauf / Laden)",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb-elevator"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "lineWidth": 0,
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            }
+          },
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 27
+      },
+      "id": 31,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "title": "Fahrtzeit vs. Leerlaufzeit",
+      "description": "Anteil aktiver Fahrtzeit an der Gesamtzeit.",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT ts.time AS \"time\", drive_ms AS \"Fahrtzeit\", e.name FROM elevator_time_stats ts JOIN elevators e ON e.id = ts.elevator_id WHERE e.name IN ($elevator) AND $__timeFilter(ts.time) ORDER BY ts.time",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT ts.time AS \"time\", idle_ms AS \"Leerlauf\", e.name FROM elevator_time_stats ts JOIN elevators e ON e.id = ts.elevator_id WHERE e.name IN ($elevator) AND $__timeFilter(ts.time) ORDER BY ts.time",
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT ts.time AS \"time\", loading_ms AS \"Ladezeit\", e.name FROM elevator_time_stats ts JOIN elevators e ON e.id = ts.elevator_id WHERE e.name IN ($elevator) AND $__timeFilter(ts.time) ORDER BY ts.time",
+          "refId": "C"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb-elevator"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "lineWidth": 2,
+            "lineInterpolation": "smooth"
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 27
+      },
+      "id": 32,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "sum"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "title": "Car Calls vs. Landing Calls",
+      "description": "Landing Calls = Ruf von außen, Car Calls = Stockwerkwahl im Aufzug.",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT cs.time AS \"time\", car_calls AS \"Car Calls\", e.name FROM elevator_count_stats cs JOIN elevators e ON e.id = cs.elevator_id WHERE e.name IN ($elevator) AND $__timeFilter(cs.time) ORDER BY cs.time",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT cs.time AS \"time\", landing_calls AS \"Landing Calls\", e.name FROM elevator_count_stats cs JOIN elevators e ON e.id = cs.elevator_id WHERE e.name IN ($elevator) AND $__timeFilter(cs.time) ORDER BY cs.time",
+          "refId": "B"
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 36
+      },
+      "id": 40,
+      "title": "🌦️ Korrelation: Auslastung & Wetter",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb-elevator"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "lineWidth": 2,
+            "lineInterpolation": "smooth"
+          },
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Temp. (°C)"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#F97316",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 37
+      },
+      "id": 41,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "title": "Motorstarts vs. Temperatur",
+      "description": "Weniger Starts bei Hitze = Hitzeabschaltung? Mehr bei Kälte = mehr Nutzung?",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT date_trunc('day', cs.time) AS \"time\", SUM(motor_start_up + motor_start_down) AS \"Motorstarts/Tag\" FROM elevator_count_stats cs JOIN elevators e ON e.id = cs.elevator_id WHERE e.name IN ($elevator) AND $__timeFilter(cs.time) GROUP BY 1 ORDER BY 1",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT time, temperature_avg AS \"Temp. (°C)\" FROM weather_observations WHERE {
+  "title": "Smart Elevator – Wartung & Gesundheit",
+  "uid": "smart-elevator-maintenance",
+  "description": "Verfügbarkeit, Motorstatistik, Auslastung und Predictive Maintenance KPIs",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "5m",
+  "time": {
+    "from": "now-30d",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "editable": true,
+  "graphTooltip": 1,
+  "id": null,
+  "tags": [
+    "elevator",
+    "maintenance",
+    "availability"
+  ],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": true,
+          "text": "Alle",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "postgres",
+          "uid": "timescaledb-elevator"
+        },
+        "definition": "SELECT name FROM elevators ORDER BY name",
+        "hide": 0,
+        "includeAll": true,
+        "multi": true,
+        "name": "elevator",
+        "label": "Aufzug",
+        "options": [],
+        "query": "SELECT name FROM elevators ORDER BY name",
+        "refresh": 1,
+        "sort": 1,
+        "type": "query"
+      }
+    ]
+  },
+  "panels": [
+    {
+      "content": "### [📊 Übersicht](/d/smart-elevator-v1) &nbsp;·&nbsp; [📈 Analyse](/d/smart-elevator-analyse) &nbsp;·&nbsp; [🤖 Steuerung](/d/smart-elevator-api) &nbsp;·&nbsp; [🚨 Fehler](/d/smart-elevator-errors) &nbsp;·&nbsp; 🔧 **Wartung & Gesundheit** &nbsp;·&nbsp; [🚪 Türen](/d/smart-elevator-doors)",
+      "gridPos": {
+        "h": 2,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "transparent": true,
+      "options": {
+        "mode": "markdown",
+        "content": "### [📊 Übersicht](/d/smart-elevator-v1) &nbsp;·&nbsp; [📈 Analyse](/d/smart-elevator-analyse) &nbsp;·&nbsp; [🤖 Steuerung](/d/smart-elevator-api) &nbsp;·&nbsp; [🚨 Fehler](/d/smart-elevator-errors) &nbsp;·&nbsp; 🔧 **Wartung & Gesundheit** &nbsp;·&nbsp; [🚪 Türen](/d/smart-elevator-doors)"
+      },
+      "type": "text"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 2
+      },
+      "id": 10,
+      "title": "🟢 Verfügbarkeit",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb-elevator"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#EF4444",
+                "value": null
+              },
+              {
+                "color": "#F59E0B",
+                "value": 90
+              },
+              {
+                "color": "#10B981",
+                "value": 98
+              }
+            ]
+          },
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "noValue": "—"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 0,
+        "y": 3
+      },
+      "id": 11,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "mean"
+          ]
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      },
+      "title": "Ø Verfügbarkeit im Zeitraum",
+      "type": "gauge",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT e.name AS \"Aufzug\", ROUND(AVG(availability_pct)::numeric, 1) AS \"Verfügbarkeit %\" FROM elevator_availability ea JOIN elevators e ON e.id = ea.elevator_id WHERE e.name IN ($elevator) AND $__timeFilter(ea.time) GROUP BY e.name ORDER BY e.name",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb-elevator"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "center",
+            "cellOptions": {
+              "type": "auto"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Verfügbarkeit %"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background",
+                  "mode": "gradient"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "#7F1D1D",
+                      "value": null
+                    },
+                    {
+                      "color": "#92400E",
+                      "value": 90
+                    },
+                    {
+                      "color": "#14532D",
+                      "value": 98
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Status"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background",
+                  "mode": "basic"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "NORMAL": {
+                        "color": "#10B981",
+                        "text": "✅ NORMAL"
+                      },
+                      "FAULT": {
+                        "color": "#EF4444",
+                        "text": "❌ FAULT"
+                      },
+                      "SERVICE": {
+                        "color": "#F59E0B",
+                        "text": "🔧 SERVICE"
+                      },
+                      "FUNCTIONAL": {
+                        "color": "#3B82F6",
+                        "text": "🔵 FUNCTIONAL"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 16,
+        "x": 8,
+        "y": 3
+      },
+      "id": 12,
+      "options": {
+        "cellHeight": "sm",
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": false,
+            "displayName": "Aufzug"
+          }
+        ]
+      },
+      "title": "Aktueller Status pro Aufzug",
+      "type": "table",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT DISTINCT ON (e.name) e.name AS \"Aufzug\", ROUND(availability_pct::numeric, 1) AS \"Verfügbarkeit %\", operating_category AS \"Status\", CASE WHEN online THEN '🟢 Online' ELSE '🔴 Offline' END AS \"Verbindung\", to_char(ea.time AT TIME ZONE 'Europe/Berlin', 'DD.MM. HH24:MI') AS \"Letzter Check\" FROM elevator_availability ea JOIN elevators e ON e.id = ea.elevator_id WHERE e.name IN ($elevator) ORDER BY e.name, ea.time DESC",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb-elevator"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "lineWidth": 2,
+            "lineInterpolation": "smooth",
+            "spanNulls": false
+          },
+          "unit": "percent",
+          "min": 0,
+          "max": 100
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 9
+      },
+      "id": 13,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "mean",
+            "min"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "title": "Verfügbarkeit im Zeitverlauf",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT ea.time AS \"time\", availability_pct AS metric, e.name AS metric FROM elevator_availability ea JOIN elevators e ON e.id = ea.elevator_id WHERE e.name IN ($elevator) AND $__timeFilter(ea.time) ORDER BY ea.time",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 17
+      },
+      "id": 20,
+      "title": "⚙️ Motorstatistik & Fahrten",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb-elevator"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "lineWidth": 2,
+            "lineInterpolation": "smooth"
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 18
+      },
+      "id": 21,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "sum"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "title": "Motorstarts Aufwärts vs. Abwärts",
+      "description": "Gleichgewicht der Richtungen zeigt Positionierungseffizienz.",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT cs.time AS \"time\", motor_start_up AS \"Aufwärts\", e.name FROM elevator_count_stats cs JOIN elevators e ON e.id = cs.elevator_id WHERE e.name IN ($elevator) AND $__timeFilter(cs.time) ORDER BY cs.time",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT cs.time AS \"time\", motor_start_down AS \"Abwärts\", e.name FROM elevator_count_stats cs JOIN elevators e ON e.id = cs.elevator_id WHERE e.name IN ($elevator) AND $__timeFilter(cs.time) ORDER BY cs.time",
+          "refId": "B"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb-elevator"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "lineWidth": 2,
+            "lineInterpolation": "smooth"
+          },
+          "unit": "lengthm"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 18
+      },
+      "id": 22,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "sum"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "title": "Gefahrene Distanz (kumulativ)",
+      "description": "Gesamtstrecke je Aufzug in Metern – Verschleißindikator.",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT cs.time AS \"time\", total_distance_mm / 1000.0 AS metric, e.name AS metric FROM elevator_count_stats cs JOIN elevators e ON e.id = cs.elevator_id WHERE e.name IN ($elevator) AND $__timeFilter(cs.time) ORDER BY cs.time",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 26
+      },
+      "id": 30,
+      "title": "⏱️ Zeitverteilung (Fahrt / Leerlauf / Laden)",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb-elevator"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "lineWidth": 0,
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            }
+          },
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 27
+      },
+      "id": 31,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "title": "Fahrtzeit vs. Leerlaufzeit",
+      "description": "Anteil aktiver Fahrtzeit an der Gesamtzeit.",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT ts.time AS \"time\", drive_ms AS \"Fahrtzeit\", e.name FROM elevator_time_stats ts JOIN elevators e ON e.id = ts.elevator_id WHERE e.name IN ($elevator) AND $__timeFilter(ts.time) ORDER BY ts.time",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT ts.time AS \"time\", idle_ms AS \"Leerlauf\", e.name FROM elevator_time_stats ts JOIN elevators e ON e.id = ts.elevator_id WHERE e.name IN ($elevator) AND $__timeFilter(ts.time) ORDER BY ts.time",
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT ts.time AS \"time\", loading_ms AS \"Ladezeit\", e.name FROM elevator_time_stats ts JOIN elevators e ON e.id = ts.elevator_id WHERE e.name IN ($elevator) AND $__timeFilter(ts.time) ORDER BY ts.time",
+          "refId": "C"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb-elevator"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "lineWidth": 2,
+            "lineInterpolation": "smooth"
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 27
+      },
+      "id": 32,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "sum"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "title": "Car Calls vs. Landing Calls",
+      "description": "Landing Calls = Ruf von außen, Car Calls = Stockwerkwahl im Aufzug.",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT cs.time AS \"time\", car_calls AS \"Car Calls\", e.name FROM elevator_count_stats cs JOIN elevators e ON e.id = cs.elevator_id WHERE e.name IN ($elevator) AND $__timeFilter(cs.time) ORDER BY cs.time",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT cs.time AS \"time\", landing_calls AS \"Landing Calls\", e.name FROM elevator_count_stats cs JOIN elevators e ON e.id = cs.elevator_id WHERE e.name IN ($elevator) AND $__timeFilter(cs.time) ORDER BY cs.time",
+          "refId": "B"
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 36
+      },
+      "id": 40,
+      "title": "🌦️ Korrelation: Auslastung & Wetter",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb-elevator"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "lineWidth": 2,
+            "lineInterpolation": "smooth"
+          },
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Temp. (°C)"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#F97316",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 37
+      },
+      "id": 41,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "title": "Motorstarts vs. Temperatur",
+      "description": "Weniger Starts bei Hitze = Hitzeabschaltung? Mehr bei Kälte = mehr Nutzung?",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT date_trunc('day', cs.time) AS \"time\", SUM(motor_start_up + motor_start_down) AS \"Motorstarts/Tag\" FROM elevator_count_stats cs JOIN elevators e ON e.id = cs.elevator_id WHERE e.name IN ($elevator) AND $__timeFilter(cs.time) GROUP BY 1 ORDER BY 1",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT date AS \"time\", temperature_avg AS \"Temp. (°C)\" FROM weather_observations WHERE $__timeFilter(date) ORDER BY date",
+          "refId": "B"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb-elevator"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "lineWidth": 2,
+            "lineInterpolation": "smooth"
+          },
+          "unit": "ms"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Niederschlag (mm)"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#3B82F6",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              },
+              {
+                "id": "custom.drawStyle",
+                "value": "bars"
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 60
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 37
+      },
+      "id": 42,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "title": "Leerlaufzeit vs. Niederschlag",
+      "description": "Mehr Regen = weniger Leerlauf (mehr Nutzung)?",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT date_trunc('day', ts.time) AS \"time\", AVG(idle_ms) AS \"Ø Leerlauf (ms)\" FROM elevator_time_stats ts JOIN elevators e ON e.id = ts.elevator_id WHERE e.name IN ($elevator) AND $__timeFilter(ts.time) GROUP BY 1 ORDER BY 1",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT date AS \"time\", precipitation AS \"Niederschlag (mm)\" FROM weather_observations WHERE $__timeFilter(date) ORDER BY date",
+          "refId": "B"
+        }
+      ]
+    }
+  ]
+}_timeFilter(time) ORDER BY time",
+          "refId": "B"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb-elevator"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "lineWidth": 2,
+            "lineInterpolation": "smooth"
+          },
+          "unit": "ms"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Niederschlag (mm)"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#3B82F6",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              },
+              {
+                "id": "custom.drawStyle",
+                "value": "bars"
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 60
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 37
+      },
+      "id": 42,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "title": "Leerlaufzeit vs. Niederschlag",
+      "description": "Mehr Regen = weniger Leerlauf (mehr Nutzung)?",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT date_trunc('day', ts.time) AS \"time\", AVG(idle_ms) AS \"Ø Leerlauf (ms)\" FROM elevator_time_stats ts JOIN elevators e ON e.id = ts.elevator_id WHERE e.name IN ($elevator) AND $__timeFilter(ts.time) GROUP BY 1 ORDER BY 1",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT date AS \"time\", precipitation AS \"Niederschlag (mm)\" FROM weather_observations WHERE $__timeFilter(date) ORDER BY date",
+          "refId": "B"
+        }
+      ]
+    }
+  ]
+}_timeFilter(time) ORDER BY time",
           "refId": "B"
         }
       ]

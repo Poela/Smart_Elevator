@@ -1996,6 +1996,103 @@
           "refId": "A"
         }
       ]
+    },
+    {
+      "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 1.5 },
+              { "color": "red", "value": 2.0 }
+            ]
+          },
+          "custom": { "displayMode": "color-background" },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 200 },
+      "id": 700,
+      "options": {
+        "cellHeight": "sm",
+        "footer": { "countRows": false, "fields": "", "reducer": ["sum"], "show": false },
+        "showHeader": true,
+        "sortBy": [{ "desc": true, "displayName": "Z-Score" }]
+      },
+      "title": "Anomalie-Erkennung – Z-Score Analyse (Wochentags-Baseline)",
+      "description": "Statistische Ausreißer in der täglichen Fahrtenzahl pro Aufzug. Methode: Z-Score bezogen auf den jeweiligen Wochentag der letzten Wochen. |z| > 2.0 = Ausreißer (rot), |z| > 1.5 = Auffällig (gelb), sonst Normal (grün).",
+      "type": "table",
+      "targets": [
+        {
+          "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT time::date AS \"Datum\", elevator_name AS \"Aufzug\", trips AS \"Fahrten\", expected_trips AS \"Erwartet\", z_score AS \"Z-Score\", anomaly_status AS \"Status\" FROM v_trip_anomalies WHERE elevator_name IN ($elevator) AND $__timeFilter(time) ORDER BY ABS(z_score) DESC LIMIT 50",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "spanNulls": false,
+            "showPoints": "auto",
+            "pointSize": 5
+          },
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Z-Score" },
+            "properties": [
+              { "id": "custom.axisPlacement", "value": "right" },
+              { "id": "unit", "value": "none" },
+              { "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } }
+            ]
+          }
+        ]
+      },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 208 },
+      "id": 701,
+      "options": {
+        "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "none" }
+      },
+      "title": "Anomalie-Zeitverlauf – Tatsächliche vs. Erwartete Fahrten",
+      "description": "Vergleich der tatsächlichen (Linie) vs. erwarteten Fahrten (Wochentags-Mittel). Punkte nahe der Baseline sind normal; starke Abweichungen weisen auf Anomalien hin.",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT time, trips AS \"Tatsächlich\", elevator_name AS metric FROM v_trip_anomalies WHERE elevator_name IN ($elevator) AND $__timeFilter(time) ORDER BY time",
+          "refId": "A"
+        },
+        {
+          "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT time, expected_trips AS \"Erwartet (Baseline)\", elevator_name AS metric FROM v_trip_anomalies WHERE elevator_name IN ($elevator) AND $__timeFilter(time) ORDER BY time",
+          "refId": "B"
+        },
+        {
+          "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT time, z_score AS \"Z-Score\", elevator_name AS metric FROM v_trip_anomalies WHERE elevator_name IN ($elevator) AND $__timeFilter(time) ORDER BY time",
+          "refId": "C"
+        }
+      ]
     }
   ]
 }

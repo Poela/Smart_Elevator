@@ -1,0 +1,281 @@
+apiVersion: 1
+
+# ── Kontaktpunkt (Grafana-internes Logging) ────────────────────────────────────
+contactPoints:
+  - orgId: 1
+    name: elevator-log
+    receivers:
+      - uid: elevator-log-receiver
+        type: email
+        settings:
+          addresses: admin@localhost
+        disableResolveMessage: false
+
+# ── Benachrichtigungs-Policy ───────────────────────────────────────────────────
+policies:
+  - orgId: 1
+    receiver: elevator-log
+    group_by: [alertname, severity]
+    group_wait: 30s
+    group_interval: 5m
+    repeat_interval: 4h
+    routes:
+      - receiver: elevator-log
+        matchers:
+          - severity = critical
+        group_wait: 10s
+        repeat_interval: 1h
+
+# ── Alert-Regeln ───────────────────────────────────────────────────────────────
+groups:
+  - orgId: 1
+    name: Aufzug-Monitoring
+    folder: Elevator Alerts
+    interval: 10m
+    rules:
+
+      # ── 1. DATENAUSFALL ──────────────────────────────────────────────────────
+      # Feuert, wenn in 6 Stunden keine einzige Fahrt registriert wurde.
+      # Erkennt: Poller down, Netzwerkausfall, Aufzug abgeschaltet.
+      - uid: elevator-alert-no-data
+        title: "Datenausfall – Keine Fahrtdaten (6 h)"
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 21600
+              to: 0
+            datasourceUid: timescaledb-elevator
+            model:
+              datasourceUid: timescaledb-elevator
+              format: table
+              rawSql: |
+                SELECT NOW() AS "time",
+                       COUNT(*) AS "value"
+                FROM elevator_events
+                WHERE time >= NOW() - INTERVAL '6 hours'
+              refId: A
+          - refId: B
+            datasourceUid: "__expr__"
+            model:
+              expression: A
+              refId: B
+              reducer: last
+              type: reduce
+          - refId: C
+            datasourceUid: "__expr__"
+            model:
+              conditions:
+                - evaluator:
+                    params: [1]
+                    type: lt
+                  operator:
+                    type: and
+                  query:
+                    params: [C]
+                  reducer:
+                    type: last
+                  type: query
+              expression: B
+              refId: C
+              type: threshold
+        execErrState: Alerting
+        for: 5m
+        noDataState: Alerting
+        annotations:
+          summary: "Kein Aufzugsbetrieb – möglicher Datenausfall"
+          description: |
+            In den letzten 6 Stunden wurden keine Fahrtdaten empfangen.
+            Mögliche Ursachen: API-Poller nicht aktiv, Netzwerkausfall, Aufzug außer Betrieb.
+            Aktion: python api_poller.py prüfen und ggf. neu starten.
+        labels:
+          severity: warning
+          component: data-pipeline
+
+      # ── 2. FAHRTENZAHL-ANOMALIE ──────────────────────────────────────────────
+      # Feuert, wenn heute mehr als 50% vom Wochentags-Mittel (letzte 4 Wochen) abweicht.
+      # Erkennt: ungewöhnliche Nutzungsmuster, Veranstaltungen, Stromausfälle.
+      - uid: elevator-alert-trip-anomaly
+        title: "Anomalie – Fahrtenzahl weicht >50% vom Wochentags-Mittel ab"
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 86400
+              to: 0
+            datasourceUid: timescaledb-elevator
+            model:
+              datasourceUid: timescaledb-elevator
+              format: table
+              rawSql: |
+                WITH today_trips AS (
+                    SELECT COUNT(*) AS trips_today
+                    FROM elevator_events
+                    WHERE time >= date_trunc('day', NOW() AT TIME ZONE 'Europe/Berlin')
+                                        AT TIME ZONE 'Europe/Berlin'
+                ),
+                baseline AS (
+                    SELECT GREATEST(AVG(daily_trips), 1) AS avg_trips
+                    FROM (
+                        SELECT date_trunc('day', time)::date AS ds,
+                               COUNT(*) AS daily_trips
+                        FROM elevator_events
+                        WHERE time >= NOW() - INTERVAL '28 days'
+                          AND EXTRACT(DOW FROM time) = EXTRACT(DOW FROM NOW())
+                        GROUP BY ds
+                    ) wk
+                )
+                SELECT NOW() AS "time",
+                       ABS(t.trips_today - b.avg_trips) / b.avg_trips * 100.0 AS "value"
+                FROM today_trips t, baseline b
+              refId: A
+          - refId: B
+            datasourceUid: "__expr__"
+            model:
+              expression: A
+              refId: B
+              reducer: last
+              type: reduce
+          - refId: C
+            datasourceUid: "__expr__"
+            model:
+              conditions:
+                - evaluator:
+                    params: [50]
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params: [C]
+                  reducer:
+                    type: last
+                  type: query
+              expression: B
+              refId: C
+              type: threshold
+        execErrState: OK
+        for: 15m
+        noDataState: OK
+        annotations:
+          summary: "Ungewöhnliche Aufzugsnutzung heute"
+          description: |
+            Die heutige Fahrtenzahl weicht um mehr als 50% vom
+            Wochentags-Durchschnitt der letzten 4 Wochen ab.
+            Mögliche Ursachen: Veranstaltung, Betriebsunterbrechung, Sensor-Fehler.
+        labels:
+          severity: info
+          component: anomaly-detection
+
+      # ── 3. PRÄDIKTIVE WARTUNG – HOHE FEHLERRATE ─────────────────────────────
+      # Feuert, wenn in einer Stunde mehr als 5 Fehler-Events gemeldet werden.
+      # Erkennt: mechanische Probleme, Türfehler, Sicherheitskreis-Fehler.
+      - uid: elevator-alert-error-rate
+        title: "Wartungsalert – Mehr als 5 Fehler in 1 Stunde"
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 3600
+              to: 0
+            datasourceUid: timescaledb-elevator
+            model:
+              datasourceUid: timescaledb-elevator
+              format: table
+              rawSql: |
+                SELECT NOW() AS "time",
+                       COUNT(*) AS "value"
+                FROM elevator_errors
+                WHERE time >= NOW() - INTERVAL '1 hour'
+                  AND event_type = 'ERROR'
+              refId: A
+          - refId: B
+            datasourceUid: "__expr__"
+            model:
+              expression: A
+              refId: B
+              reducer: last
+              type: reduce
+          - refId: C
+            datasourceUid: "__expr__"
+            model:
+              conditions:
+                - evaluator:
+                    params: [5]
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params: [C]
+                  reducer:
+                    type: last
+                  type: query
+              expression: B
+              refId: C
+              type: threshold
+        execErrState: OK
+        for: 5m
+        noDataState: OK
+        annotations:
+          summary: "Wartungsalert: Erhöhte Fehlerrate"
+          description: |
+            Mehr als 5 Fehler-Events in der letzten Stunde.
+            Bitte den Fehler & Ereignisse Dashboard prüfen und ggf. Wartungsteam benachrichtigen.
+        labels:
+          severity: critical
+          component: predictive-maintenance
+
+      # ── 4. NIEDRIGE AUFZUGSVERFÜGBARKEIT ────────────────────────────────────
+      # Feuert, wenn die gemeldete Verfügbarkeit unter 95% fällt.
+      - uid: elevator-alert-availability
+        title: "Aufzug-Verfügbarkeit unter 95%"
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 3600
+              to: 0
+            datasourceUid: timescaledb-elevator
+            model:
+              datasourceUid: timescaledb-elevator
+              format: table
+              rawSql: |
+                SELECT NOW() AS "time",
+                       COALESCE(AVG(availability_pct), 100.0) AS "value"
+                FROM elevator_availability
+                WHERE time >= NOW() - INTERVAL '1 hour'
+              refId: A
+          - refId: B
+            datasourceUid: "__expr__"
+            model:
+              expression: A
+              refId: B
+              reducer: last
+              type: reduce
+          - refId: C
+            datasourceUid: "__expr__"
+            model:
+              conditions:
+                - evaluator:
+                    params: [95]
+                    type: lt
+                  operator:
+                    type: and
+                  query:
+                    params: [C]
+                  reducer:
+                    type: last
+                  type: query
+              expression: B
+              refId: C
+              type: threshold
+        execErrState: OK
+        for: 5m
+        noDataState: OK
+        annotations:
+          summary: "Aufzug-Verfügbarkeit unter 95% – Wartung prüfen"
+          description: |
+            Die gemittelte Verfügbarkeit der Aufzüge ist unter 95% gefallen.
+            Wartungs-Dashboard prüfen: Motorstarts, Fahrtzeiten, Leerlaufzeiten.
+        labels:
+          severity: critical
+          component: predictive-maintenance
