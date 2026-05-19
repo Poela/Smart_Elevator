@@ -217,16 +217,16 @@ Write-Step "Docker Images fuer Cloud Run bauen und pushen (linux/amd64)"
 $GRAFANA_FULL = "docker.io/$DOCKERHUB_USER/${GRAFANA_IMAGE}:latest"
 $POLLER_FULL  = "docker.io/$DOCKERHUB_USER/${POLLER_IMAGE}:latest"
 
-Write-Info "Poller-Image bauen (linux/amd64)..."
-docker build --platform=linux/amd64 -f Dockerfile -t $POLLER_FULL .
+Write-Info "Poller-Image bauen (linux/amd64, kein Provenance/SBOM)..."
+docker build --platform=linux/amd64 --provenance=false --sbom=false -f Dockerfile -t $POLLER_FULL .
 if ($LASTEXITCODE -ne 0) { Stop-OnError "Docker Build Poller fehlgeschlagen" }
 Write-Info "Poller-Image pushen..."
 docker push $POLLER_FULL
 if ($LASTEXITCODE -ne 0) { Stop-OnError "Docker Push Poller fehlgeschlagen" }
 Write-OK "Poller-Image gepusht: $POLLER_FULL"
 
-Write-Info "Grafana-Image bauen (linux/amd64, timescaledb=false)..."
-docker build --platform=linux/amd64 -f Dockerfile.grafana -t $GRAFANA_FULL .
+Write-Info "Grafana-Image bauen (linux/amd64, kein Provenance/SBOM)..."
+docker build --platform=linux/amd64 --provenance=false --sbom=false -f Dockerfile.grafana -t $GRAFANA_FULL .
 if ($LASTEXITCODE -ne 0) { Stop-OnError "Docker Build Grafana fehlgeschlagen" }
 Write-Info "Grafana-Image pushen..."
 docker push $GRAFANA_FULL
@@ -301,26 +301,23 @@ gcloud run deploy extended-poller `
 Write-OK "Extended Poller laeuft"
 
 # ------------------------------------------------------------------------------
-# 9. CLOUD RUN: DWD-POLLER (stuendlich)
+# 9. CLOUD RUN JOB: DWD-POLLER (stuendlich per Cloud Scheduler)
+# dwd_poller.py hat keinen HTTP-Server → Cloud Run Job statt Service
 # ------------------------------------------------------------------------------
-Write-Step "DWD-Wetter-Poller auf Cloud Run deployen"
+Write-Step "DWD-Wetter-Poller Job erstellen"
 
-gcloud run deploy dwd-poller `
+gcloud run jobs create dwd-poller-job `
     --image=$POLLER_FULL `
     --region=$REGION `
-    --platform=managed `
-    --no-allow-unauthenticated `
-    --port=8082 `
-    --min-instances=1 `
+    --command="python" `
+    --args="dwd_poller.py" `
     --cpu=1 `
     --memory=512Mi `
-    --no-cpu-throttling `
-    --command="python" `
-    --args="dwd_poller.py,--loop" `
-    --set-env-vars="DB_HOST=$SQL_IP,DB_PORT=5432,DB_NAME=$DB_NAME,DB_USER=$DB_USER,DB_PASSWORD=$DB_PASSWORD,DB_SSLMODE=disable,DWD_STATION_ID=10729,DWD_POLL_INTERVAL_SEC=3600" `
-    --project=$PROJECT_ID
-
-Write-OK "DWD-Poller laeuft"
+    --max-retries=2 `
+    --task-timeout=300s `
+    --set-env-vars="DB_HOST=$SQL_IP,DB_PORT=5432,DB_NAME=$DB_NAME,DB_USER=$DB_USER,DB_PASSWORD=$DB_PASSWORD,DB_SSLMODE=disable,DWD_STATION_ID=10729" `
+    --project=$PROJECT_ID 2>$null
+Write-OK "DWD-Poller Job erstellt (wird stuendlich ausgefuehrt)"
 
 # ------------------------------------------------------------------------------
 # 10. CLOUD RUN JOBS: FORECAST + ALERTER
@@ -377,6 +374,16 @@ if (-not $saExists) {
     Write-OK "Service Account existiert bereits"
 }
 
+# DWD: stuendlich
+gcloud scheduler jobs create http dwd-trigger `
+    --location=$REGION `
+    --schedule="0 * * * *" `
+    --uri="https://$REGION-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/$PROJECT_ID/jobs/dwd-poller-job:run" `
+    --message-body="{}" `
+    --oauth-service-account-email=$SA_EMAIL `
+    --project=$PROJECT_ID 2>$null
+Write-OK "DWD-Poller: stuendlich"
+
 # Forecast: taeglich 02:00 UTC (= 04:00 MESZ)
 gcloud scheduler jobs create http forecast-trigger `
     --location=$REGION `
@@ -417,11 +424,11 @@ Write-Host " Laufende Cloud Run Services:" -ForegroundColor White
 Write-Host "   grafana         (oeffentlich, min. 1 Instanz)" -ForegroundColor Gray
 Write-Host "   api-poller      (intern, dauerhaft, alle 60s)" -ForegroundColor Gray
 Write-Host "   extended-poller (intern, dauerhaft)" -ForegroundColor Gray
-Write-Host "   dwd-poller      (intern, dauerhaft, stuendlich)" -ForegroundColor Gray
 Write-Host ""
 Write-Host " Geplante Jobs (Cloud Scheduler):" -ForegroundColor White
-Write-Host "   forecast-job  (taeglich 02:00 UTC)" -ForegroundColor Gray
-Write-Host "   alerter-job   (taeglich 07:00 UTC)" -ForegroundColor Gray
+Write-Host "   dwd-poller-job  (stuendlich, 0 * * * *)" -ForegroundColor Gray
+Write-Host "   forecast-job    (taeglich 02:00 UTC)" -ForegroundColor Gray
+Write-Host "   alerter-job     (taeglich 07:00 UTC)" -ForegroundColor Gray
 Write-Host ""
 Write-Host " Logs anzeigen:" -ForegroundColor White
 Write-Host "   gcloud run services logs read api-poller --region=$REGION --project=$PROJECT_ID" -ForegroundColor Gray

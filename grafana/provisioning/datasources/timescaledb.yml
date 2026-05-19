@@ -11,10 +11,10 @@ datasources:
     jsonData:
       database: ${GF_POSTGRES_DB}
       sslmode: ${GF_POSTGRES_SSLMODE}
-      maxOpenConns: 10
-      maxIdleConns: 2
-      maxIdleConnsAuto: true
-      connMaxLifetime: 14400
+      maxOpenConns: 5
+      maxIdleConns: 1
+      maxIdleConnsAuto: false
+      connMaxLifetime: 300
       postgresVersion: 1600
       timescaledb: false
     secureJsonData:
