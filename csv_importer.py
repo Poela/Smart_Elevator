@@ -37,6 +37,7 @@ DB_CONFIG = {
     "dbname":   os.getenv("DB_NAME", "elevator_db"),
     "user":     os.getenv("DB_USER", "postgres"),
     "password": os.getenv("DB_PASSWORD", ""),
+    "sslmode":  os.getenv("DB_SSLMODE", "prefer"),
 }
 
 # CSV-Dateien → Aufzugsname (muss mit elevators.name in der DB übereinstimmen)

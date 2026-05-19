@@ -30,6 +30,12 @@ services:
       GF_SECURITY_ADMIN_USER: admin
       GF_SECURITY_ADMIN_PASSWORD: admin
       GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/elevator_dashboard.json
+      # Datasource-Verbindung (lokal: Docker-Service-Name "timescaledb")
+      GF_POSTGRES_HOST: timescaledb
+      GF_POSTGRES_USER: postgres
+      GF_POSTGRES_PASSWORD: Test123
+      GF_POSTGRES_DB: elevator_db
+      GF_POSTGRES_SSLMODE: disable
     volumes:
       - grafana_data:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning

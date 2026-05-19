@@ -794,7 +794,124 @@
       "type": "row"
     },
     {
-      "content": "### ✅ Elevision API aktiv\n\n`api_poller.py` läuft und liefert alle **60 Sekunden** Live-Daten von 3 verbundenen Controllern:\n\n| Controller | Elevision-ID | Status |\n|---|---|---|\n| Campus Brücken HN West | 242600 | 🟢 verbunden |\n| Campus Brücken HN Ost | 242601 | 🟢 verbunden |\n| Teststand lipah Aufzüge Heilbronn | 269916 | 🟢 verbunden |\n\nDie **Zahl rechts** zeigt die Gesamtanzahl der bisher via API gespeicherten Ereignisse.",
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb-elevator"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false,
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Online"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "options": {
+                      "true": {
+                        "color": "green",
+                        "index": 0,
+                        "text": "Verbunden"
+                      },
+                      "false": {
+                        "color": "red",
+                        "index": 1,
+                        "text": "Getrennt"
+                      }
+                    },
+                    "type": "value"
+                  }
+                ]
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background",
+                  "applyToRow": false
+                }
+              },
+              {
+                "id": "custom.width",
+                "value": 120
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Verfuegbarkeit %"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "gauge",
+                  "mode": "lcd"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "red",
+                      "value": null
+                    },
+                    {
+                      "color": "yellow",
+                      "value": 80
+                    },
+                    {
+                      "color": "green",
+                      "value": 95
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "min",
+                "value": 0
+              },
+              {
+                "id": "max",
+                "value": 100
+              },
+              {
+                "id": "custom.width",
+                "value": 160
+              }
+            ]
+          }
+        ]
+      },
       "gridPos": {
         "h": 6,
         "w": 16,
@@ -803,16 +920,38 @@
       },
       "id": 545,
       "options": {
-        "code": {
-          "language": "plaintext",
-          "showLineNumbers": false,
-          "showMiniMap": false
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
         },
-        "content": "### ✅ Elevision API aktiv\n\n`api_poller.py` läuft und liefert alle **60 Sekunden** Live-Daten von 3 verbundenen Controllern:\n\n| Controller | Elevision-ID | Status |\n|---|---|---|\n| Campus Brücken HN West | 242600 | 🟢 verbunden |\n| Campus Brücken HN Ost | 242601 | 🟢 verbunden |\n| Teststand lipah Aufzüge Heilbronn | 269916 | 🟢 verbunden |\n\nDie **Zahl rechts** zeigt die Gesamtanzahl der bisher via API gespeicherten Ereignisse.",
-        "mode": "markdown"
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": false,
+            "displayName": "Controller"
+          }
+        ]
       },
-      "title": "",
-      "type": "text"
+      "title": "Live-Verbindungsstatus (Elevision API)",
+      "description": "Aktueller Verbindungsstatus der 3 Elevision-Controller",
+      "type": "table",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT e.name AS \"Controller\", CASE WHEN ea.online THEN 'true' ELSE 'false' END AS \"Online\", ROUND(ea.availability_pct::numeric, 1) AS \"Verfuegbarkeit %\", ea.operating_category AS \"Betriebsart\", to_char(ea.time AT TIME ZONE 'Europe/Berlin', 'DD.MM HH24:MI') AS \"Zuletzt gesehen\" FROM (SELECT DISTINCT ON (elevator_id) * FROM elevator_availability ORDER BY elevator_id, time DESC) ea JOIN elevators e ON e.id = ea.elevator_id ORDER BY e.name",
+          "refId": "A"
+        }
+      ]
     },
     {
       "datasource": {
@@ -823,35 +962,24 @@
         "defaults": {
           "color": {
             "mode": "fixed",
-            "fixedColor": "#374151"
+            "fixedColor": "#6366f1"
           },
-          "mappings": [
-            {
-              "options": {
-                "0": {
-                  "text": "⏳ Ausstehend",
-                  "color": "#F59E0B"
-                }
-              },
-              "type": "value"
-            }
-          ],
-          "noValue": "⏳ Ausstehend",
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "#374151",
+                "color": "#6366f1",
                 "value": null
               }
             ]
           },
-          "unit": "short"
+          "unit": "short",
+          "mappings": []
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 6,
+        "h": 2,
         "w": 8,
         "x": 16,
         "y": 40
@@ -859,9 +987,9 @@
       "id": 541,
       "options": {
         "colorMode": "background",
-        "graphMode": "none",
+        "graphMode": "area",
         "justifyMode": "center",
-        "orientation": "vertical",
+        "orientation": "horizontal",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -869,10 +997,72 @@
           "fields": "",
           "values": false
         },
-        "textMode": "auto"
+        "textMode": "valueAndName"
       },
-      "title": "API-Status",
-      "description": "Zeigt 'Ausstehend' bis die API-Anbindung aktiv ist.",
+      "title": "API-Ereignisse (7d)",
+      "description": "Summe aller API-Ereignisse im gewaehlten Zeitraum",
+      "type": "stat",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT date_trunc('hour', time) AS \"time\", COUNT(*) AS \"Ereignisse\" FROM elevator_events WHERE source = 'api' AND $__timeFilter(time) GROUP BY 1 ORDER BY 1",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb-elevator"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#10b981"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#10b981",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short",
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 2,
+        "w": 8,
+        "x": 16,
+        "y": 42
+      },
+      "id": 546,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "valueAndName"
+      },
+      "title": "Ereignisse heute",
+      "description": "API-Ereignisse seit Mitternacht (Ortszeit)",
       "type": "stat",
       "targets": [
         {
@@ -882,7 +1072,69 @@
           },
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT COUNT(*) AS \"API-Ereignisse\" FROM elevator_events WHERE source = 'api'",
+          "rawSql": "SELECT COUNT(*) AS \"Heute\" FROM elevator_events WHERE source = 'api' AND time >= date_trunc('day', NOW() AT TIME ZONE 'Europe/Berlin') AT TIME ZONE 'Europe/Berlin'",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb-elevator"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#6b7280"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#6b7280",
+                "value": null
+              }
+            ]
+          },
+          "unit": "none",
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 2,
+        "w": 8,
+        "x": 16,
+        "y": 44
+      },
+      "id": 547,
+      "options": {
+        "colorMode": "none",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "valueAndName"
+      },
+      "title": "Letztes API-Update",
+      "description": "Zeitpunkt des zuletzt empfangenen API-Ereignisses",
+      "type": "stat",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT to_char(MAX(time) AT TIME ZONE 'Europe/Berlin', 'DD.MM.YYYY HH24:MI:SS') AS \"Letztes Update\" FROM elevator_events WHERE source = 'api'",
           "refId": "A"
         }
       ]

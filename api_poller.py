@@ -98,6 +98,7 @@ DB_CONFIG = {
     "dbname":   os.getenv("DB_NAME", "elevator_db"),
     "user":     os.getenv("DB_USER", "postgres"),
     "password": os.getenv("DB_PASSWORD", ""),
+    "sslmode":  os.getenv("DB_SSLMODE", "prefer"),
 }
 CONFIG_PATH  = Path(os.getenv("POLLER_CONFIG", "poller_config.yaml"))
 METRICS_PORT = int(os.getenv("METRICS_PORT", "8080"))
@@ -340,8 +341,9 @@ def map_response(raw: list, mapping: dict) -> list[dict]:
     einem festen DB-Namen (nützlich wenn API- und DB-Name abweichen).
     """
     override = mapping.get("elevator_name_override")
-    result = []
-    for item in raw:
+    items    = [raw] if isinstance(raw, dict) else (raw or [])
+    result   = []
+    for item in items:
         name  = override if override else _get_nested(item, mapping.get("elevator_name", "name"))
         floor = _get_nested(item, mapping.get("floor", "currentFloor"))
         if name is not None and floor is not None:
@@ -400,7 +402,10 @@ def poll_source(source_cfg: dict, cb: CircuitBreaker, rate_limiter: RateLimiter)
     rate_limiter.acquire()
 
     with POLL_DURATION.labels(source=name).time():
-        headers = {"Authorization": f"Bearer {api_key}"} if api_key else {}
+        headers = {
+            "Authorization": f"Bearer {api_key}",
+            "Accept": "application/vnd.elevision.v1+json",
+        } if api_key else {"Accept": "application/vnd.elevision.v1+json"}
 
         try:
             raw = fetch_with_retry(url, headers, timeout, name)
@@ -567,6 +572,7 @@ def main() -> None:
             args=[source, cb, rl],
             id=f"poll_{source['name']}",
             name=source["name"],
+            next_run_time=datetime.now(BERLIN_TZ),  # sofort beim Start pollen
             max_instances=1,  # Verhindert überlappende Ausführung
             coalesce=True,    # Bei Rückstand: nur einmal ausführen, nicht aufholen
         )

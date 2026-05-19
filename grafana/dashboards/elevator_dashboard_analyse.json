@@ -282,7 +282,7 @@
         ]
       },
       "gridPos": {
-        "h": 9,
+        "h": 8,
         "w": 24,
         "x": 0,
         "y": 3
@@ -321,7 +321,7 @@
           },
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT LPAD(hour_of_day::text, 2, '0') || ':00' AS \"Uhrzeit\", ROUND(SUM(CASE WHEN elevator_name = 'Aufzug links L-Bau'     THEN avg_trips_per_hour ELSE 0 END)::numeric, 2) AS \"Links L-Bau\", ROUND(SUM(CASE WHEN elevator_name = 'Aufzug rechts L-Bau'    THEN avg_trips_per_hour ELSE 0 END)::numeric, 2) AS \"Rechts L-Bau\", ROUND(SUM(CASE WHEN elevator_name = 'Campus Brücken HN West' THEN avg_trips_per_hour ELSE 0 END)::numeric, 2) AS \"Campus HN\", ROUND(SUM(CASE WHEN elevator_name = 'Feuerwehraufzug L-Bau'  THEN avg_trips_per_hour ELSE 0 END)::numeric, 2) AS \"Feuerwehr\", ROUND(SUM(CASE WHEN elevator_name = 'Campus Brücken HN Ost'              THEN avg_trips_per_hour ELSE 0 END)::numeric, 2) AS \"Campus HN Ost\", ROUND(SUM(CASE WHEN elevator_name = 'Teststand lipah Aufzüge Heilbronn' THEN avg_trips_per_hour ELSE 0 END)::numeric, 2) AS \"Teststand lipah\" FROM v_hourly_pattern WHERE elevator_name IN ($elevator) GROUP BY hour_of_day ORDER BY hour_of_day",
+          "rawSql": "WITH hours AS (SELECT generate_series(0, 23) AS h) SELECT LPAD(hours.h::text, 2, '0') || ':00' AS \"Uhrzeit\", COALESCE(ROUND(SUM(CASE WHEN d.elevator_name = 'Aufzug links L-Bau' THEN d.avg_trips_per_hour ELSE 0 END)::numeric, 2), 0) AS \"Links L-Bau\", COALESCE(ROUND(SUM(CASE WHEN d.elevator_name = 'Aufzug rechts L-Bau' THEN d.avg_trips_per_hour ELSE 0 END)::numeric, 2), 0) AS \"Rechts L-Bau\", COALESCE(ROUND(SUM(CASE WHEN d.elevator_name = 'Feuerwehraufzug L-Bau' THEN d.avg_trips_per_hour ELSE 0 END)::numeric, 2), 0) AS \"Feuerwehr\", COALESCE(ROUND(SUM(CASE WHEN d.elevator_name = 'Campus Brücken HN West' THEN d.avg_trips_per_hour ELSE 0 END)::numeric, 2), 0) AS \"Campus HN West\", COALESCE(ROUND(SUM(CASE WHEN d.elevator_name = 'Campus Brücken HN Ost' THEN d.avg_trips_per_hour ELSE 0 END)::numeric, 2), 0) AS \"Campus HN Ost\", COALESCE(ROUND(SUM(CASE WHEN d.elevator_name = 'Teststand lipah Aufzüge Heilbronn' THEN d.avg_trips_per_hour ELSE 0 END)::numeric, 2), 0) AS \"Teststand\" FROM hours LEFT JOIN v_hourly_pattern d ON d.hour_of_day = hours.h AND d.elevator_name IN ($elevator) GROUP BY hours.h ORDER BY hours.h",
           "refId": "A"
         }
       ]
@@ -422,10 +422,10 @@
         ]
       },
       "gridPos": {
-        "h": 8,
+        "h": 9,
         "w": 12,
         "x": 0,
-        "y": 12
+        "y": 11
       },
       "id": 202,
       "options": {
@@ -537,10 +537,10 @@
         ]
       },
       "gridPos": {
-        "h": 8,
+        "h": 9,
         "w": 12,
         "x": 12,
-        "y": 12
+        "y": 11
       },
       "id": 203,
       "options": {
@@ -620,7 +620,7 @@
               "type": "linear"
             },
             "showPoints": "auto",
-            "spanNulls": false,
+            "spanNulls": true,
             "stacking": {
               "group": "A",
               "mode": "none"
@@ -696,6 +696,108 @@
                 "value": 0
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Campus HN West"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#F97316",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 2
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 8
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "7-Tage-Trend (Campus)"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#F97316",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 2
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dash",
+                  "dash": [
+                    8,
+                    4
+                  ]
+                }
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Campus HN Ost"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#10B981",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 2
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 8
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Teststand"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#FBBF24",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 2
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 8
+              }
+            ]
           }
         ]
       },
@@ -764,6 +866,46 @@
           "rawQuery": true,
           "rawSql": "SELECT day AS \"time\", ROUND(AVG(cnt) OVER (ORDER BY day ROWS BETWEEN 6 PRECEDING AND CURRENT ROW)::numeric, 1) AS \"7-Tage-Trend (Rechts)\" FROM (SELECT date_trunc('day', time) AS day, COUNT(*) AS cnt FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Aufzug rechts L-Bau' AND $__timeFilter(ev.time) GROUP BY 1) t ORDER BY day",
           "refId": "D"
+        },
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT date_trunc('day', time) AS \"time\", COUNT(*) AS \"Campus HN West\" FROM (SELECT time, floor, LAG(floor) OVER (PARTITION BY elevator_id ORDER BY time) AS prev_floor FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Campus Brücken HN West' AND $__timeFilter(ev.time)) sub WHERE floor != prev_floor OR prev_floor IS NULL GROUP BY 1 ORDER BY 1",
+          "refId": "E"
+        },
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT day AS \"time\", ROUND(AVG(cnt) OVER (ORDER BY day ROWS BETWEEN 6 PRECEDING AND CURRENT ROW)::numeric, 1) AS \"7-Tage-Trend (Campus)\" FROM (SELECT date_trunc('day', time) AS day, COUNT(*) AS cnt FROM (SELECT time, floor, LAG(floor) OVER (PARTITION BY elevator_id ORDER BY time) AS prev_floor FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Campus Brücken HN West' AND $__timeFilter(ev.time)) sub WHERE floor != prev_floor OR prev_floor IS NULL GROUP BY 1) t ORDER BY day",
+          "refId": "F"
+        },
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT date_trunc('day', time) AS \"time\", COUNT(*) AS \"Campus HN Ost\" FROM (SELECT time, floor, LAG(floor) OVER (PARTITION BY elevator_id ORDER BY time) AS prev_floor FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Campus Brücken HN Ost' AND $__timeFilter(ev.time)) sub WHERE floor != prev_floor OR prev_floor IS NULL GROUP BY 1 ORDER BY 1",
+          "refId": "G"
+        },
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT date_trunc('day', time) AS \"time\", COUNT(*) AS \"Teststand\" FROM (SELECT time, floor, LAG(floor) OVER (PARTITION BY elevator_id ORDER BY time) AS prev_floor FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Teststand lipah Aufzüge Heilbronn' AND $__timeFilter(ev.time)) sub WHERE floor != prev_floor OR prev_floor IS NULL GROUP BY 1 ORDER BY 1",
+          "refId": "H"
         }
       ]
     },
@@ -865,6 +1007,10 @@
                 "value": 0
               },
               {
+                "id": "custom.fillBelowTo",
+                "value": "CI unten Links"
+              },
+              {
                 "id": "custom.fillOpacity",
                 "value": 18
               },
@@ -887,10 +1033,6 @@
               {
                 "id": "custom.lineWidth",
                 "value": 0
-              },
-              {
-                "id": "custom.fillBelowTo",
-                "value": "CI oben Links"
               },
               {
                 "id": "custom.fillOpacity",
@@ -963,10 +1105,6 @@
                   "fixedColor": "#06B6D4",
                   "mode": "fixed"
                 }
-              },
-              {
-                "id": "custom.fillBelowTo",
-                "value": "CI oben Links"
               }
             ]
           },
@@ -999,12 +1137,60 @@
                 }
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Ist Campus HN West"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#F97316",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 2
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "ML Campus HN West"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#F97316",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 3
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dash",
+                  "dash": [
+                    8,
+                    4
+                  ]
+                }
+              }
+            ]
           }
         ]
       },
       "gridPos": {
         "h": 11,
-        "w": 24,
+        "w": 17,
         "x": 0,
         "y": 30
       },
@@ -1025,7 +1211,7 @@
         }
       },
       "title": "14-Tage-ML-Prognose (LightGBM) mit 80 % Konfidenzband",
-      "description": "Historische Ist-Werte (dünn) + Prophet-Prognose (dick) + 80%-Konfidenzband (Schimmer). Modell nutzt wöchentliche Saisonalität und DWD-Wetterdaten als Regressoren. Täglich neu trainiert.",
+      "description": "Historische Ist-Werte + LightGBM Quantile-Regression mit 80%-Konfidenzband. Features: Wochentag, Lag-7, Rolling-Mittel, DWD-Wetterdaten. Taeglich um 02:00 Uhr neu trainiert (forecast_service.py --loop). Campus HN West zeigt Live-API-Daten (Elevision) bis heute.",
       "type": "timeseries",
       "targets": [
         {
@@ -1087,6 +1273,26 @@
           "rawQuery": true,
           "rawSql": "SELECT time AS \"time\", forecast_trips AS \"ML Rechts L-Bau\" FROM v_latest_forecast WHERE elevator_name = 'Aufzug rechts L-Bau' AND elevator_name IN ($elevator) AND $__timeFilter(time) ORDER BY time",
           "refId": "F"
+        },
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT date_trunc('day', time) AS \"time\", COUNT(*) AS \"Ist Campus HN West\" FROM (SELECT time, floor, LAG(floor) OVER (PARTITION BY elevator_id ORDER BY time) AS prev_floor FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Campus Brücken HN West' AND $__timeFilter(ev.time)) sub WHERE floor != prev_floor OR prev_floor IS NULL GROUP BY 1 ORDER BY 1",
+          "refId": "G"
+        },
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT time AS \"time\", forecast_trips AS \"ML Campus HN West\" FROM v_latest_forecast WHERE elevator_name = 'Campus Brücken HN West' AND $__timeFilter(time) ORDER BY time",
+          "refId": "H"
         }
       ]
     },
@@ -1190,7 +1396,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 39
+        "y": 41
       },
       "id": 106,
       "title": "🌦️ Wetter-Korrelation (DWD Heilbronn)",
@@ -1272,7 +1478,7 @@
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 40
+        "y": 42
       },
       "id": 601,
       "options": {
@@ -1442,7 +1648,7 @@
         "h": 9,
         "w": 12,
         "x": 12,
-        "y": 40
+        "y": 42
       },
       "id": 602,
       "options": {
@@ -1576,7 +1782,7 @@
                 "id": "custom.cellOptions",
                 "value": {
                   "type": "color-background",
-                  "mode": "basic"
+                  "mode": "gradient"
                 }
               },
               {
@@ -1585,27 +1791,49 @@
                   "mode": "absolute",
                   "steps": [
                     {
-                      "color": "#7F1D1D",
+                      "color": "#C62828",
                       "value": null
                     },
                     {
-                      "color": "#B45309",
+                      "color": "#EF5350",
+                      "value": -0.5
+                    },
+                    {
+                      "color": "#FFA726",
                       "value": -0.3
                     },
                     {
-                      "color": "#374151",
-                      "value": -0.1
+                      "color": "#78909C",
+                      "value": 0.0
                     },
                     {
-                      "color": "#B45309",
+                      "color": "#66BB6A",
                       "value": 0.3
                     },
                     {
-                      "color": "#14532D",
+                      "color": "#2E7D32",
                       "value": 0.5
                     }
                   ]
                 }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "thresholds"
+                }
+              },
+              {
+                "id": "min",
+                "value": -1
+              },
+              {
+                "id": "max",
+                "value": 1
+              },
+              {
+                "id": "decimals",
+                "value": 3
               }
             ]
           },
@@ -1619,7 +1847,7 @@
                 "id": "custom.cellOptions",
                 "value": {
                   "type": "color-background",
-                  "mode": "basic"
+                  "mode": "gradient"
                 }
               },
               {
@@ -1628,27 +1856,49 @@
                   "mode": "absolute",
                   "steps": [
                     {
-                      "color": "#7F1D1D",
+                      "color": "#C62828",
                       "value": null
                     },
                     {
-                      "color": "#B45309",
+                      "color": "#EF5350",
+                      "value": -0.5
+                    },
+                    {
+                      "color": "#FFA726",
                       "value": -0.3
                     },
                     {
-                      "color": "#374151",
-                      "value": -0.1
+                      "color": "#78909C",
+                      "value": 0.0
                     },
                     {
-                      "color": "#B45309",
+                      "color": "#66BB6A",
                       "value": 0.3
                     },
                     {
-                      "color": "#14532D",
+                      "color": "#2E7D32",
                       "value": 0.5
                     }
                   ]
                 }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "thresholds"
+                }
+              },
+              {
+                "id": "min",
+                "value": -1
+              },
+              {
+                "id": "max",
+                "value": 1
+              },
+              {
+                "id": "decimals",
+                "value": 3
               }
             ]
           }
@@ -1658,11 +1908,11 @@
         "h": 5,
         "w": 16,
         "x": 0,
-        "y": 49
+        "y": 51
       },
       "id": 603,
       "options": {
-        "cellHeight": "sm",
+        "cellHeight": "md",
         "footer": {
           "countRows": false,
           "fields": "",
@@ -1696,12 +1946,12 @@
       ]
     },
     {
-      "content": "**Pearson r – Interpretation:**\n\n| r | Bedeutung |\n|---|---|\n| 🟢 > +0.5 | Starke positive Korrelation |\n| 🟡 +0.3 bis +0.5 | Moderate positive Korrelation |\n| ⚫ -0.3 bis +0.3 | Kein signifikanter Zusammenhang |\n| 🟡 -0.5 bis -0.3 | Moderate negative Korrelation |\n| 🔴 < -0.5 | Starke negative Korrelation |\n\n> Empfehlung: mind. 30 Tage gemeinsamer Daten.",
+      "content": "### Pearson r\n\n| Farbe | Wert | Bedeutung |\n|---|---|---|\n| 🟢 Dunkelgrün | > +0.5 | Starke positive Korrelation |\n| 🟩 Hellgrün | +0.3 .. +0.5 | Moderate positive Korrelation |\n| ⬜ Grau | -0.3 .. +0.3 | Kein signifikanter Zusammenhang |\n| 🟧 Orange | -0.5 .. -0.3 | Moderate negative Korrelation |\n| 🔴 Dunkelrot | < -0.5 | Starke negative Korrelation |\n\n_Mind. 30 Datenpunkte fuer Aussagekraft._",
       "gridPos": {
         "h": 5,
         "w": 8,
         "x": 16,
-        "y": 49
+        "y": 51
       },
       "id": 605,
       "options": {
@@ -1710,11 +1960,11 @@
           "showLineNumbers": false,
           "showMiniMap": false
         },
-        "content": "**Pearson r – Interpretation:**\n\n| r | Bedeutung |\n|---|---|\n| 🟢 > +0.5 | Starke positive Korrelation |\n| 🟡 +0.3 bis +0.5 | Moderate positive Korrelation |\n| ⚫ -0.3 bis +0.3 | Kein signifikanter Zusammenhang |\n| 🟡 -0.5 bis -0.3 | Moderate negative Korrelation |\n| 🔴 < -0.5 | Starke negative Korrelation |\n\n> Empfehlung: mind. 30 Tage gemeinsamer Daten.",
+        "content": "### Pearson r\n\n| Farbe | Wert | Bedeutung |\n|---|---|---|\n| 🟢 Dunkelgrün | > +0.5 | Starke positive Korrelation |\n| 🟩 Hellgrün | +0.3 .. +0.5 | Moderate positive Korrelation |\n| ⬜ Grau | -0.3 .. +0.3 | Kein signifikanter Zusammenhang |\n| 🟧 Orange | -0.5 .. -0.3 | Moderate negative Korrelation |\n| 🔴 Dunkelrot | < -0.5 | Starke negative Korrelation |\n\n_Mind. 30 Datenpunkte fuer Aussagekraft._",
         "mode": "markdown"
       },
       "title": "",
-      "transparent": false,
+      "transparent": true,
       "type": "text"
     },
     {
@@ -1728,13 +1978,17 @@
             "mode": "palette-classic"
           },
           "custom": {
-            "fillOpacity": 80,
+            "fillOpacity": 90,
             "gradientMode": "opacity",
             "lineWidth": 0,
             "hideFrom": {
               "legend": false,
               "tooltip": false,
               "viz": false
+            },
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
             }
           },
           "mappings": [],
@@ -1816,7 +2070,7 @@
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 54
+        "y": 56
       },
       "id": 606,
       "options": {
@@ -1832,7 +2086,7 @@
         },
         "orientation": "auto",
         "showValue": "auto",
-        "stacking": "none",
+        "stacking": "normal",
         "tooltip": {
           "mode": "multi",
           "sort": "desc"
@@ -1852,7 +2106,7 @@
           },
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT temp_bucket, ROUND(SUM(CASE WHEN elevator_name = 'Aufzug links L-Bau'     THEN avg_trips_per_day ELSE 0 END)::numeric,1) AS \"Links L-Bau\", ROUND(SUM(CASE WHEN elevator_name = 'Aufzug rechts L-Bau'    THEN avg_trips_per_day ELSE 0 END)::numeric,1) AS \"Rechts L-Bau\", ROUND(SUM(CASE WHEN elevator_name = 'Campus Brücken HN West' THEN avg_trips_per_day ELSE 0 END)::numeric,1) AS \"Campus HN\", ROUND(SUM(CASE WHEN elevator_name = 'Feuerwehraufzug L-Bau'  THEN avg_trips_per_day ELSE 0 END)::numeric,1) AS \"Feuerwehr\", ROUND(SUM(CASE WHEN elevator_name = 'Campus Brücken HN Ost'              THEN avg_trips_per_day ELSE 0 END)::numeric,1) AS \"Campus HN Ost\", ROUND(SUM(CASE WHEN elevator_name = 'Teststand lipah Aufzüge Heilbronn' THEN avg_trips_per_day ELSE 0 END)::numeric,1) AS \"Teststand lipah\" FROM v_trips_by_temp_bucket WHERE elevator_name IN ($elevator) GROUP BY temp_bucket ORDER BY temp_bucket",
+          "rawSql": "WITH all_buckets AS (  SELECT '1: unter 0 C'   AS temp_bucket, 1 AS ord UNION ALL  SELECT '2: 0 bis 5 C',   2 UNION ALL  SELECT '3: 5 bis 10 C',  3 UNION ALL  SELECT '4: 10 bis 15 C', 4 UNION ALL  SELECT '5: 15 bis 20 C', 5 UNION ALL  SELECT '6: 20 bis 25 C', 6 UNION ALL  SELECT '7: ueber 25 C',  7), data AS (  SELECT temp_bucket, elevator_name, avg_trips_per_day  FROM v_trips_by_temp_bucket  WHERE elevator_name IN ($elevator)) SELECT b.temp_bucket, COALESCE(ROUND(SUM(CASE WHEN d.elevator_name = 'Aufzug links L-Bau'             THEN d.avg_trips_per_day ELSE 0 END)::numeric,1),0) AS \"Links L-Bau\", COALESCE(ROUND(SUM(CASE WHEN d.elevator_name = 'Aufzug rechts L-Bau'            THEN d.avg_trips_per_day ELSE 0 END)::numeric,1),0) AS \"Rechts L-Bau\", COALESCE(ROUND(SUM(CASE WHEN d.elevator_name = 'Campus Brücken HN West'    THEN d.avg_trips_per_day ELSE 0 END)::numeric,1),0) AS \"Campus HN West\", COALESCE(ROUND(SUM(CASE WHEN d.elevator_name = 'Feuerwehraufzug L-Bau'          THEN d.avg_trips_per_day ELSE 0 END)::numeric,1),0) AS \"Feuerwehr\", COALESCE(ROUND(SUM(CASE WHEN d.elevator_name = 'Campus Brücken HN Ost'     THEN d.avg_trips_per_day ELSE 0 END)::numeric,1),0) AS \"Campus HN Ost\", COALESCE(ROUND(SUM(CASE WHEN d.elevator_name = 'Teststand lipah Aufzüge Heilbronn' THEN d.avg_trips_per_day ELSE 0 END)::numeric,1),0) AS \"Teststand\" FROM all_buckets b LEFT JOIN data d ON d.temp_bucket = b.temp_bucket GROUP BY b.temp_bucket, b.ord ORDER BY b.ord",
           "refId": "A"
         }
       ]
@@ -1868,13 +2122,17 @@
             "mode": "palette-classic"
           },
           "custom": {
-            "fillOpacity": 80,
+            "fillOpacity": 90,
             "gradientMode": "opacity",
             "lineWidth": 0,
             "hideFrom": {
               "legend": false,
               "tooltip": false,
               "viz": false
+            },
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
             }
           },
           "mappings": [],
@@ -1956,7 +2214,7 @@
         "h": 9,
         "w": 12,
         "x": 12,
-        "y": 54
+        "y": 56
       },
       "id": 607,
       "options": {
@@ -1972,7 +2230,7 @@
         },
         "orientation": "auto",
         "showValue": "auto",
-        "stacking": "none",
+        "stacking": "normal",
         "tooltip": {
           "mode": "multi",
           "sort": "desc"
@@ -1998,37 +2256,85 @@
       ]
     },
     {
-      "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 65
+      },
+      "id": 108,
+      "title": "Anomalie-Erkennung",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb-elevator"
+      },
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "thresholds" },
+          "color": {
+            "mode": "thresholds"
+          },
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "green", "value": null },
-              { "color": "yellow", "value": 1.5 },
-              { "color": "red", "value": 2.0 }
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1.5
+              },
+              {
+                "color": "red",
+                "value": 2.0
+              }
             ]
           },
-          "custom": { "displayMode": "color-background" },
+          "custom": {
+            "displayMode": "color-background"
+          },
           "mappings": []
         },
         "overrides": []
       },
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 200 },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 66
+      },
       "id": 700,
       "options": {
         "cellHeight": "sm",
-        "footer": { "countRows": false, "fields": "", "reducer": ["sum"], "show": false },
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
         "showHeader": true,
-        "sortBy": [{ "desc": true, "displayName": "Z-Score" }]
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "Z-Score"
+          }
+        ]
       },
       "title": "Anomalie-Erkennung – Z-Score Analyse (Wochentags-Baseline)",
       "description": "Statistische Ausreißer in der täglichen Fahrtenzahl pro Aufzug. Methode: Z-Score bezogen auf den jeweiligen Wochentag der letzten Wochen. |z| > 2.0 = Ausreißer (rot), |z| > 1.5 = Auffällig (gelb), sonst Normal (grün).",
       "type": "table",
       "targets": [
         {
-          "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
           "format": "table",
           "rawQuery": true,
           "rawSql": "SELECT time::date AS \"Datum\", elevator_name AS \"Aufzug\", trips AS \"Fahrten\", expected_trips AS \"Erwartet\", z_score AS \"Z-Score\", anomaly_status AS \"Status\" FROM v_trip_anomalies WHERE elevator_name IN ($elevator) AND $__timeFilter(time) ORDER BY ABS(z_score) DESC LIMIT 50",
@@ -2037,10 +2343,15 @@
       ]
     },
     {
-      "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb-elevator"
+      },
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "palette-classic" },
+          "color": {
+            "mode": "palette-classic"
+          },
           "custom": {
             "lineWidth": 1,
             "fillOpacity": 10,
@@ -2052,41 +2363,78 @@
         },
         "overrides": [
           {
-            "matcher": { "id": "byName", "options": "Z-Score" },
+            "matcher": {
+              "id": "byName",
+              "options": "Z-Score"
+            },
             "properties": [
-              { "id": "custom.axisPlacement", "value": "right" },
-              { "id": "unit", "value": "none" },
-              { "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } }
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              },
+              {
+                "id": "unit",
+                "value": "none"
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "orange",
+                  "mode": "fixed"
+                }
+              }
             ]
           }
         ]
       },
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 208 },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 74
+      },
       "id": 701,
       "options": {
-        "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
-        "tooltip": { "mode": "multi", "sort": "none" }
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
       },
       "title": "Anomalie-Zeitverlauf – Tatsächliche vs. Erwartete Fahrten",
       "description": "Vergleich der tatsächlichen (Linie) vs. erwarteten Fahrten (Wochentags-Mittel). Punkte nahe der Baseline sind normal; starke Abweichungen weisen auf Anomalien hin.",
       "type": "timeseries",
       "targets": [
         {
-          "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
           "format": "time_series",
           "rawQuery": true,
           "rawSql": "SELECT time, trips AS \"Tatsächlich\", elevator_name AS metric FROM v_trip_anomalies WHERE elevator_name IN ($elevator) AND $__timeFilter(time) ORDER BY time",
           "refId": "A"
         },
         {
-          "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
           "format": "time_series",
           "rawQuery": true,
           "rawSql": "SELECT time, expected_trips AS \"Erwartet (Baseline)\", elevator_name AS metric FROM v_trip_anomalies WHERE elevator_name IN ($elevator) AND $__timeFilter(time) ORDER BY time",
           "refId": "B"
         },
         {
-          "datasource": { "type": "postgres", "uid": "timescaledb-elevator" },
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
           "format": "time_series",
           "rawQuery": true,
           "rawSql": "SELECT time, z_score AS \"Z-Score\", elevator_name AS metric FROM v_trip_anomalies WHERE elevator_name IN ($elevator) AND $__timeFilter(time) ORDER BY time",

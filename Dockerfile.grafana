@@ -1,0 +1,20 @@
+# Grafana mit eingebettetem Provisioning
+# Dashboards und Datasource-Konfiguration werden ins Image gebacken.
+# Die DB-Verbindung wird per Umgebungsvariable gesetzt:
+#   GF_POSTGRES_HOST     = Azure PostgreSQL FQDN
+#   GF_POSTGRES_PASSWORD = DB-Passwort
+#   GF_POSTGRES_USER     = DB-Benutzer (Standard: postgres)
+#   GF_POSTGRES_DB       = Datenbankname (Standard: elevator_db)
+
+FROM grafana/grafana:11.1.0
+
+# Provisioning (Datasources, Dashboard-Provider, Alerts)
+COPY grafana/provisioning /etc/grafana/provisioning
+
+# Dashboard-JSON-Dateien
+COPY grafana/dashboards /var/lib/grafana/dashboards
+
+# Grafana laeuft als User 472 (grafana) - Rechte setzen
+USER root
+RUN chown -R 472:472 /var/lib/grafana/dashboards /etc/grafana/provisioning
+USER 472

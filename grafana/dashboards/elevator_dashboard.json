@@ -554,22 +554,13 @@
             "axisLabel": "Stockwerk",
             "axisPlacement": "auto",
             "drawStyle": "line",
-            "fillOpacity": 20,
-            "gradientMode": "scheme",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
+            "fillOpacity": 15,
+            "gradientMode": "none",
             "lineInterpolation": "smooth",
             "lineWidth": 2,
             "pointSize": 4,
-            "scaleDistribution": {
-              "type": "linear"
-            },
             "showPoints": "auto",
-            "spanNulls": false,
+            "spanNulls": true,
             "stacking": {
               "group": "A",
               "mode": "none"
@@ -587,13 +578,15 @@
                 "value": null
               }
             ]
-          }
+          },
+          "unit": "short",
+          "min": 0
         },
         "overrides": [
           {
             "matcher": {
               "id": "byName",
-              "options": "Aufzug links L-Bau"
+              "options": "Aufzug links"
             },
             "properties": [
               {
@@ -608,7 +601,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Aufzug rechts L-Bau"
+              "options": "Aufzug rechts"
             },
             "properties": [
               {
@@ -623,7 +616,125 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Campus Brücken HN West"
+              "options": "Feuerwehraufzug"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#EF4444",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 0,
+        "y": 8
+      },
+      "id": 5,
+      "options": {
+        "legend": {
+          "calcs": [
+            "last"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "title": "Stockwerksverlauf L-Bau",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT time AS \"time\", floor AS \"Aufzug links\" FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Aufzug links L-Bau' AND $__timeFilter(ev.time) ORDER BY time",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT time AS \"time\", floor AS \"Aufzug rechts\" FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Aufzug rechts L-Bau' AND $__timeFilter(ev.time) ORDER BY time",
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb-elevator"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT time AS \"time\", floor AS \"Feuerwehraufzug\" FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Feuerwehraufzug L-Bau' AND $__timeFilter(ev.time) ORDER BY time",
+          "refId": "C"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb-elevator"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "Stockwerk",
+            "axisPlacement": "auto",
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "gradientMode": "none",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 4,
+            "showPoints": "auto",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short",
+          "min": 0
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "HN West"
             },
             "properties": [
               {
@@ -638,22 +749,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Feuerwehraufzug L-Bau"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "#EF4444",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Campus Brücken HN Ost"
+              "options": "HN Ost"
             },
             "properties": [
               {
@@ -668,7 +764,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Teststand lipah"
+              "options": "Teststand"
             },
             "properties": [
               {
@@ -684,15 +780,17 @@
       },
       "gridPos": {
         "h": 10,
-        "w": 24,
-        "x": 0,
+        "w": 12,
+        "x": 12,
         "y": 8
       },
-      "id": 5,
+      "id": 50,
       "options": {
         "legend": {
-          "calcs": [],
-          "displayMode": "list",
+          "calcs": [
+            "last"
+          ],
+          "displayMode": "table",
           "placement": "bottom",
           "showLegend": true
         },
@@ -701,7 +799,7 @@
           "sort": "none"
         }
       },
-      "title": "Stockwerksverlauf aller Aufzüge",
+      "title": "Stockwerksverlauf Campus HN",
       "type": "timeseries",
       "targets": [
         {
@@ -711,7 +809,7 @@
           },
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT time AS \"time\", floor AS \"Aufzug links L-Bau\" FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Aufzug links L-Bau' AND $__timeFilter(ev.time) ORDER BY time",
+          "rawSql": "SELECT time AS \"time\", floor AS \"HN West\" FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Campus Brücken HN West' AND $__timeFilter(ev.time) ORDER BY time",
           "refId": "A"
         },
         {
@@ -721,7 +819,7 @@
           },
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT time AS \"time\", floor AS \"Aufzug rechts L-Bau\" FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Aufzug rechts L-Bau' AND $__timeFilter(ev.time) ORDER BY time",
+          "rawSql": "SELECT time AS \"time\", floor AS \"HN Ost\" FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Campus Brücken HN Ost' AND $__timeFilter(ev.time) ORDER BY time",
           "refId": "B"
         },
         {
@@ -731,38 +829,8 @@
           },
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT time AS \"time\", floor AS \"Campus Brücken HN West\" FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Campus Brücken HN West' AND $__timeFilter(ev.time) ORDER BY time",
+          "rawSql": "SELECT time AS \"time\", floor AS \"Teststand\" FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Teststand lipah Aufzüge Heilbronn' AND $__timeFilter(ev.time) ORDER BY time",
           "refId": "C"
-        },
-        {
-          "datasource": {
-            "type": "postgres",
-            "uid": "timescaledb-elevator"
-          },
-          "format": "time_series",
-          "rawQuery": true,
-          "rawSql": "SELECT time AS \"time\", floor AS \"Feuerwehraufzug L-Bau\" FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Feuerwehraufzug L-Bau' AND $__timeFilter(ev.time) ORDER BY time",
-          "refId": "D"
-        },
-        {
-          "datasource": {
-            "type": "postgres",
-            "uid": "timescaledb-elevator"
-          },
-          "format": "time_series",
-          "rawQuery": true,
-          "rawSql": "SELECT time AS \"time\", floor AS \"Campus Brücken HN Ost\" FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Campus Brücken HN Ost' AND $__timeFilter(ev.time) ORDER BY time",
-          "refId": "E"
-        },
-        {
-          "datasource": {
-            "type": "postgres",
-            "uid": "timescaledb-elevator"
-          },
-          "format": "time_series",
-          "rawQuery": true,
-          "rawSql": "SELECT time AS \"time\", floor AS \"Teststand lipah\" FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Teststand lipah Aufzüge Heilbronn' AND $__timeFilter(ev.time) ORDER BY time",
-          "refId": "F"
         }
       ]
     },
@@ -1102,14 +1170,14 @@
         ]
       },
       "gridPos": {
-        "h": 6,
+        "h": 10,
         "w": 24,
         "x": 0,
         "y": 29
       },
       "id": 8,
       "options": {
-        "cellHeight": "sm",
+        "cellHeight": "md",
         "footer": {
           "countRows": false,
           "fields": "",

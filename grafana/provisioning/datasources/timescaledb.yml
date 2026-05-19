@@ -4,11 +4,13 @@ datasources:
   - name: TimescaleDB
     uid: timescaledb-elevator
     type: postgres
-    url: timescaledb:5432
-    user: postgres
+    # Lokal:  GF_POSTGRES_HOST=timescaledb (Docker-Service-Name)
+    # Azure:  GF_POSTGRES_HOST=<server>.postgres.database.azure.com
+    url: ${GF_POSTGRES_HOST}:5432
+    user: ${GF_POSTGRES_USER}
     jsonData:
-      database: elevator_db
-      sslmode: disable
+      database: ${GF_POSTGRES_DB}
+      sslmode: ${GF_POSTGRES_SSLMODE}
       maxOpenConns: 10
       maxIdleConns: 2
       maxIdleConnsAuto: true
@@ -16,6 +18,6 @@ datasources:
       postgresVersion: 1600
       timescaledb: true
     secureJsonData:
-      password: Test123
+      password: ${GF_POSTGRES_PASSWORD}
     isDefault: true
     editable: true

@@ -214,6 +214,80 @@ FROM v_floor_by_hour
 ORDER BY elevator_name, hour_of_day, occurrences DESC;
 
 -- ------------------------------------------------------------
+-- ML-Prognose (LightGBM Quantile-Regression)
+-- Befüllt durch forecast_service.py
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS elevator_forecast (
+    time          TIMESTAMPTZ NOT NULL,
+    elevator_name TEXT        NOT NULL,
+    model         TEXT        NOT NULL DEFAULT 'lgbm_quantile',
+    forecast_date DATE        NOT NULL DEFAULT CURRENT_DATE,
+    yhat          REAL        NOT NULL,
+    yhat_lower    REAL        NOT NULL,
+    yhat_upper    REAL        NOT NULL
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_forecast_unique
+    ON elevator_forecast (time, elevator_name, model, forecast_date);
+CREATE INDEX IF NOT EXISTS idx_forecast_elevator_time
+    ON elevator_forecast (elevator_name, time);
+
+-- Neueste Prognose je (time, elevator_name)
+CREATE OR REPLACE VIEW v_latest_forecast AS
+SELECT DISTINCT ON (time, elevator_name)
+    time,
+    elevator_name,
+    yhat       AS forecast_trips,
+    yhat_lower AS ci_lower,
+    yhat_upper AS ci_upper,
+    model,
+    forecast_date
+FROM elevator_forecast
+ORDER BY time, elevator_name, forecast_date DESC;
+
+-- Anomalie-Erkennung via Z-Score (Wochentags-Baseline)
+CREATE OR REPLACE VIEW v_trip_anomalies AS
+WITH daily_trips AS (
+    SELECT
+        date_trunc('day', time)::date   AS day,
+        e.name                          AS elevator_name,
+        COUNT(*)                        AS trips,
+        EXTRACT(DOW FROM time)::int     AS day_of_week
+    FROM elevator_events ev
+    JOIN elevators e ON e.id = ev.elevator_id
+    GROUP BY date_trunc('day', time)::date, e.name, EXTRACT(DOW FROM time)::int
+),
+weekday_stats AS (
+    SELECT
+        elevator_name,
+        day_of_week,
+        AVG(trips)    AS mean_trips,
+        STDDEV(trips) AS stddev_trips
+    FROM daily_trips
+    GROUP BY elevator_name, day_of_week
+)
+SELECT
+    dt.day::timestamptz                              AS time,
+    dt.elevator_name,
+    dt.trips,
+    ROUND(ws.mean_trips::numeric, 1)                 AS expected_trips,
+    CASE
+        WHEN ws.stddev_trips IS NULL OR ws.stddev_trips = 0 THEN 0::numeric
+        ELSE ROUND(((dt.trips - ws.mean_trips) / ws.stddev_trips)::numeric, 2)
+    END                                              AS z_score,
+    CASE
+        WHEN ws.stddev_trips IS NULL OR ws.stddev_trips = 0 THEN 'Normal'
+        WHEN ABS((dt.trips - ws.mean_trips) / ws.stddev_trips) > 2.0 THEN 'Ausreißer'
+        WHEN ABS((dt.trips - ws.mean_trips) / ws.stddev_trips) > 1.5 THEN 'Auffällig'
+        ELSE 'Normal'
+    END                                              AS anomaly_status
+FROM daily_trips dt
+JOIN weekday_stats ws
+  ON ws.elevator_name = dt.elevator_name
+ AND ws.day_of_week   = dt.day_of_week
+ORDER BY dt.day DESC, dt.elevator_name;
+
+-- ------------------------------------------------------------
 -- Erweiterte Indizes
 -- ------------------------------------------------------------
 -- GIN für JSONB-Spalten (ermöglicht @>, ?, ?& Operators)
@@ -352,63 +426,114 @@ CREATE INDEX IF NOT EXISTS idx_dlq_unresolved
     WHERE resolved_at IS NULL;
 
 -- ------------------------------------------------------------
--- API-Tabellen: Fehler, Wartung, Türen
+-- API-Tabellen: Fehler, Verfuegbarkeit, Tuer, Statistiken
+-- Alle Spalten aus migration_elevision.sql – schema.sql ist
+-- die einzige autoritative Quelle fuer einen Neuaufbau.
 -- ------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS elevator_errors (
-    time         TIMESTAMPTZ  NOT NULL,
-    elevator_id  INTEGER      NOT NULL REFERENCES elevators(id),
-    event_type   TEXT         NOT NULL,
-    category     TEXT,
-    floor        SMALLINT,
-    e4_id        TEXT
-);
-SELECT create_hypertable('elevator_errors','time',chunk_time_interval=>INTERVAL '1 week',if_not_exists=>TRUE);
-CREATE INDEX IF NOT EXISTS idx_elevator_errors_elevator_time ON elevator_errors (elevator_id, time DESC);
 
+-- Fehler-Events  /publicapi/events/{id}/  (alle 5 min)
+CREATE TABLE IF NOT EXISTS elevator_errors (
+    time          TIMESTAMPTZ NOT NULL,
+    elevator_id   INTEGER     NOT NULL REFERENCES elevators(id),
+    api_event_id  TEXT,
+    event_type    TEXT,
+    category      TEXT,
+    floor         SMALLINT,
+    pos_mm        INTEGER,
+    e4_id         TEXT,
+    fst_id        TEXT,
+    details       JSONB NOT NULL DEFAULT '{}'
+);
+SELECT create_hypertable('elevator_errors','time',
+    chunk_time_interval => INTERVAL '1 week', if_not_exists => TRUE);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_errors_unique
+    ON elevator_errors (time, elevator_id, api_event_id);
+CREATE INDEX IF NOT EXISTS idx_errors_elevator_time
+    ON elevator_errors (elevator_id, time DESC);
+CREATE INDEX IF NOT EXISTS idx_errors_type
+    ON elevator_errors (event_type, time DESC) WHERE event_type = 'ERROR';
+
+-- Verfuegbarkeit  /overview  (jede Minute)
 CREATE TABLE IF NOT EXISTS elevator_availability (
     time                TIMESTAMPTZ NOT NULL,
     elevator_id         INTEGER     NOT NULL REFERENCES elevators(id),
     availability_pct    REAL,
+    availability_level  TEXT,
+    condition           TEXT,
     operating_category  TEXT,
     online              BOOLEAN
 );
-SELECT create_hypertable('elevator_availability','time',chunk_time_interval=>INTERVAL '1 week',if_not_exists=>TRUE);
-CREATE INDEX IF NOT EXISTS idx_elevator_avail_elevator_time ON elevator_availability (elevator_id, time DESC);
+SELECT create_hypertable('elevator_availability','time',
+    chunk_time_interval => INTERVAL '1 week', if_not_exists => TRUE);
+CREATE INDEX IF NOT EXISTS idx_availability_elevator_time
+    ON elevator_availability (elevator_id, time DESC);
 
+-- Zaehl-Statistiken  /statistics/count  (stuendlich)
 CREATE TABLE IF NOT EXISTS elevator_count_stats (
-    time              TIMESTAMPTZ NOT NULL,
-    elevator_id       INTEGER     NOT NULL REFERENCES elevators(id),
-    motor_start_up    INTEGER,
-    motor_start_down  INTEGER,
-    total_distance_mm BIGINT,
-    car_calls         INTEGER,
-    landing_calls     INTEGER
+    time               TIMESTAMPTZ NOT NULL,
+    elevator_id        INTEGER     NOT NULL REFERENCES elevators(id),
+    car_calls          INTEGER,
+    landing_calls      INTEGER,
+    standard_drives    INTEGER,
+    park_drives        INTEGER,
+    motor_start_up     INTEGER,
+    motor_start_down   INTEGER,
+    total_distance_mm  BIGINT,
+    avg_car_calls_main REAL,
+    avg_car_loading    REAL
 );
-SELECT create_hypertable('elevator_count_stats','time',chunk_time_interval=>INTERVAL '1 week',if_not_exists=>TRUE);
-CREATE INDEX IF NOT EXISTS idx_elevator_count_elevator_time ON elevator_count_stats (elevator_id, time DESC);
+SELECT create_hypertable('elevator_count_stats','time',
+    chunk_time_interval => INTERVAL '1 week', if_not_exists => TRUE);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_count_stats_unique
+    ON elevator_count_stats (time, elevator_id);
+CREATE INDEX IF NOT EXISTS idx_count_stats_elevator_time
+    ON elevator_count_stats (elevator_id, time DESC);
 
+-- Zeit-Statistiken  /statistics/time  (stuendlich)
 CREATE TABLE IF NOT EXISTS elevator_time_stats (
-    time        TIMESTAMPTZ NOT NULL,
-    elevator_id INTEGER     NOT NULL REFERENCES elevators(id),
-    drive_ms    BIGINT,
-    idle_ms     BIGINT,
-    loading_ms  BIGINT
+    time          TIMESTAMPTZ NOT NULL,
+    elevator_id   INTEGER     NOT NULL REFERENCES elevators(id),
+    drive_ms      BIGINT,
+    idle_ms       BIGINT,
+    drive_up_ms   BIGINT,
+    drive_down_ms BIGINT,
+    loading_ms    BIGINT,
+    light_off_ms  BIGINT,
+    esm_sleep_ms  BIGINT
 );
-SELECT create_hypertable('elevator_time_stats','time',chunk_time_interval=>INTERVAL '1 week',if_not_exists=>TRUE);
-CREATE INDEX IF NOT EXISTS idx_elevator_time_elevator_time ON elevator_time_stats (elevator_id, time DESC);
+SELECT create_hypertable('elevator_time_stats','time',
+    chunk_time_interval => INTERVAL '1 week', if_not_exists => TRUE);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_time_stats_unique
+    ON elevator_time_stats (time, elevator_id);
+CREATE INDEX IF NOT EXISTS idx_time_stats_elevator_time
+    ON elevator_time_stats (elevator_id, time DESC);
 
+-- Tuer-Statistiken  /conditions/doors  (alle 10 min)
 CREATE TABLE IF NOT EXISTS elevator_door_stats (
     time                  TIMESTAMPTZ NOT NULL,
     elevator_id           INTEGER     NOT NULL REFERENCES elevators(id),
-    door                  TEXT        NOT NULL,
+    floor                 SMALLINT,
+    door                  TEXT,
+    avg_opening_ms        INTEGER,
+    avg_closing_ms        INTEGER,
     reversing_count       INTEGER,
+    cycles_count          INTEGER,
     photocell_activations INTEGER,
-    avg_opening_ms        REAL,
-    avg_closing_ms        REAL,
-    cycles_count          INTEGER
+    photocell_time_ms     INTEGER
 );
-SELECT create_hypertable('elevator_door_stats','time',chunk_time_interval=>INTERVAL '1 week',if_not_exists=>TRUE);
-CREATE INDEX IF NOT EXISTS idx_elevator_door_elevator_time ON elevator_door_stats (elevator_id, time DESC);
+SELECT create_hypertable('elevator_door_stats','time',
+    chunk_time_interval => INTERVAL '1 week', if_not_exists => TRUE);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_door_stats_unique
+    ON elevator_door_stats (time, elevator_id, door);
+CREATE INDEX IF NOT EXISTS idx_door_stats_elevator_time
+    ON elevator_door_stats (elevator_id, time DESC);
+
+-- Retention Policies fuer API-Tabellen
+SELECT add_retention_policy('elevator_errors',       INTERVAL '1 year',  if_not_exists => TRUE);
+SELECT add_retention_policy('elevator_door_stats',   INTERVAL '1 year',  if_not_exists => TRUE);
+SELECT add_retention_policy('elevator_count_stats',  INTERVAL '2 years', if_not_exists => TRUE);
+SELECT add_retention_policy('elevator_time_stats',   INTERVAL '2 years', if_not_exists => TRUE);
+SELECT add_retention_policy('elevator_availability', INTERVAL '90 days', if_not_exists => TRUE);
 
 -- Korrektur-Log (Auditpfad für Late-Data / Korrekturen)
 -- Workflow: 1) Eintrag hier anlegen, 2) Original per UPDATE floor=new, quality_flag=1 fixen

@@ -1,0 +1,14 @@
+venv/
+__pycache__/
+*.pyc
+*.pyo
+.env
+.git/
+.gitignore
+History_Daten_Elevator/
+Smart_Elevator/
+*.md
+*.ps1
+migration_*.sql
+create_*.sql
+.claude/
