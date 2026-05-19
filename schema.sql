@@ -33,14 +33,18 @@ CREATE TABLE IF NOT EXISTS elevators (
 
 -- Stammdaten einfügen (meta: Geo + technische Attribute – erweiterbar ohne Migration)
 INSERT INTO elevators (name, location, max_floor, meta) VALUES
-    ('Aufzug links L-Bau',     'L-Bau',     10,
+    ('Aufzug links L-Bau',               'L-Bau',     10,
      '{"lat":49.1427,"lon":9.2199,"manufacturer":"Schindler","model":"3300 MRL","max_speed_mps":1.6,"commissioned_year":2018}'),
-    ('Aufzug rechts L-Bau',    'L-Bau',     10,
+    ('Aufzug rechts L-Bau',              'L-Bau',     10,
      '{"lat":49.1427,"lon":9.2199,"manufacturer":"Schindler","model":"3300 MRL","max_speed_mps":1.6,"commissioned_year":2018}'),
-    ('Campus Brücken HN West', 'Campus HN',  1,
+    ('Campus Brücken HN West',           'Campus HN',  1,
      '{"lat":49.1401,"lon":9.2188,"manufacturer":"Otis","model":"Gen2 Comfort","max_speed_mps":1.0,"commissioned_year":2020}'),
-    ('Feuerwehraufzug L-Bau',  'L-Bau',     10,
-     '{"lat":49.1427,"lon":9.2199,"manufacturer":"Schindler","model":"5500","max_speed_mps":1.6,"commissioned_year":2018}')
+    ('Feuerwehraufzug L-Bau',            'L-Bau',     10,
+     '{"lat":49.1427,"lon":9.2199,"manufacturer":"Schindler","model":"5500","max_speed_mps":1.6,"commissioned_year":2018}'),
+    ('Campus Brücken HN Ost',            'Campus HN',  1,
+     '{"lat":49.1401,"lon":9.2188,"manufacturer":"Otis","model":"Gen2 Comfort","max_speed_mps":1.0,"commissioned_year":2020}'),
+    ('Teststand lipah Aufzüge Heilbronn','Campus HN', 10,
+     '{"lat":49.1401,"lon":9.2188,"manufacturer":"Unknown","model":"Unknown","commissioned_year":2020}')
 ON CONFLICT (name) DO NOTHING;
 
 -- ------------------------------------------------------------

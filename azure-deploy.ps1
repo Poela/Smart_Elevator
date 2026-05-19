@@ -1,6 +1,8 @@
 # ==============================================================================
 # Elevator Monitoring - Azure Deployment
 # Kompatibel mit Windows PowerShell 5.1
+# Registry:  Docker Hub  (ACR per Policy gesperrt bei Azure for Students)
+# Datenbank: TimescaleDB als Container App (PostgreSQL Flexible Server gesperrt)
 # ==============================================================================
 # Ausfuehren:
 #   Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
@@ -10,85 +12,90 @@
 $ErrorActionPreference = "Stop"
 
 # ------------------------------------------------------------------------------
-# KONFIGURATION - hier anpassen
+# KONFIGURATION
 # ------------------------------------------------------------------------------
-$RESOURCE_GROUP    = "elevator-monitoring-rg"
-$LOCATION          = "westeurope"           # germanywestcentral unterstuetzt kein PostgreSQL (Student)
-$REGISTRY_NAME     = "elevatormonitoring"   # NUR Kleinbuchstaben+Zahlen, global eindeutig
-$POSTGRES_SERVER   = "elevator-db-hn"       # Kleinbuchstaben+Zahlen+Bindestrich, global eindeutig
-$POSTGRES_ADMIN    = "pgadmin"
-$POSTGRES_PASSWORD = "ElevatorHN2024!"
-$DB_NAME           = "elevator_db"
-$CONTAINER_ENV     = "elevator-cae"
-$POLLER_IMAGE      = "elevator-poller"
-$GRAFANA_IMAGE     = "elevator-grafana"
+$RESOURCE_GROUP      = "elevator-monitoring-rg"
+$LOCATION            = "eastus"
+$CONTAINER_ENV       = "elevator-cae"
+$DB_NAME             = "elevator_db"
+$POSTGRES_ADMIN      = "pgadmin"
+$POSTGRES_PASSWORD   = "ElevatorHN2024!"
+$POLLER_IMAGE        = "elevator-poller"
+$GRAFANA_IMAGE       = "elevator-grafana"
+$TIMESCALEDB_IMAGE   = "elevator-timescaledb"
 
-# JWT-Token aus .env lesen (PS 5.1 kompatibel, kein ?. Operator)
+# Docker Hub – leer lassen, Script fragt dann interaktiv
+$DOCKERHUB_USER  = ""
+$DOCKERHUB_TOKEN = ""
+
+# JWT-Token aus .env lesen
 $JWT_TOKEN = ""
 if (Test-Path ".env") {
-    $envLines = Get-Content ".env"
-    foreach ($line in $envLines) {
-        if ($line -match "^ELEVISION_JWT_TOKEN=(.+)$") {
-            $JWT_TOKEN = $Matches[1]
-            break
-        }
+    foreach ($line in (Get-Content ".env")) {
+        if ($line -match "^ELEVISION_JWT_TOKEN=(.+)$") { $JWT_TOKEN = $Matches[1]; break }
     }
 }
 if (-not $JWT_TOKEN) {
     Write-Warning "ELEVISION_JWT_TOKEN nicht in .env gefunden."
-    $JWT_TOKEN = Read-Host "Bitte JWT-Token eingeben (oder Enter fuer leer)"
+    $JWT_TOKEN = Read-Host "JWT-Token eingeben (oder Enter fuer leer)"
 }
 
 # ------------------------------------------------------------------------------
 # HILFSFUNKTIONEN
 # ------------------------------------------------------------------------------
-function Write-Step($msg) {
-    Write-Host ""
-    Write-Host ">>> $msg" -ForegroundColor Cyan
-}
-function Write-OK($msg) {
-    Write-Host "    OK  $msg" -ForegroundColor Green
-}
-function Write-Info($msg) {
-    Write-Host "    ... $msg" -ForegroundColor Gray
+function Write-Step($msg) { Write-Host ""; Write-Host ">>> $msg" -ForegroundColor Cyan }
+function Write-OK($msg)   { Write-Host "    OK  $msg" -ForegroundColor Green }
+function Write-Info($msg) { Write-Host "    ... $msg" -ForegroundColor Gray }
+
+function Invoke-DockerPush($image) {
+    $maxRetries = 5
+    for ($i = 1; $i -le $maxRetries; $i++) {
+        Write-Info "Push-Versuch $i von $maxRetries : $image"
+        docker push $image
+        if ($LASTEXITCODE -eq 0) { return }
+        if ($i -lt $maxRetries) {
+            Write-Host "    WARNUNG: Push fehlgeschlagen, warte 10s und versuche erneut..." -ForegroundColor Yellow
+            Start-Sleep -Seconds 10
+        }
+    }
+    Write-Error "Docker Push nach $maxRetries Versuchen fehlgeschlagen: $image"
+    exit 1
 }
 
 # ------------------------------------------------------------------------------
-# 0. VORAUSSETZUNGEN PRUEFEN
+# 0. VORAUSSETZUNGEN
 # ------------------------------------------------------------------------------
 Write-Step "Voraussetzungen pruefen"
 
-$azCmd = Get-Command az -ErrorAction SilentlyContinue
-if (-not $azCmd) {
+if (-not (Get-Command az -ErrorAction SilentlyContinue)) {
     Write-Error "Azure CLI nicht gefunden. Installieren: https://aka.ms/installazurecliwindows"
     exit 1
 }
 Write-OK "Azure CLI gefunden"
 
 $accountJson = az account show -o json 2>$null
-if (-not $accountJson) {
-    Write-Host "Nicht eingeloggt. Starte az login..." -ForegroundColor Yellow
-    az login
-    $accountJson = az account show -o json
-}
+if (-not $accountJson) { az login; $accountJson = az account show -o json }
 $account = $accountJson | ConvertFrom-Json
 Write-OK "Eingeloggt als: $($account.name)"
+
+if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
+    Write-Error "Docker nicht gefunden. Docker Desktop installieren: https://www.docker.com/products/docker-desktop/"
+    exit 1
+}
+Write-OK "Docker gefunden"
+
+if (-not $DOCKERHUB_USER)  { $DOCKERHUB_USER  = Read-Host "Docker Hub Benutzername" }
+if (-not $DOCKERHUB_TOKEN) { $DOCKERHUB_TOKEN = Read-Host "Docker Hub Access Token" }
 
 Write-Info "Container Apps Extension pruefen..."
 az extension add --name containerapp --upgrade --only-show-errors 2>$null
 Write-OK "Container Apps Extension bereit"
 
 # ------------------------------------------------------------------------------
-# 1. RESOURCE PROVIDER REGISTRIEREN (einmalig pro Subscription)
+# 1. RESOURCE PROVIDER
 # ------------------------------------------------------------------------------
 Write-Step "Azure Resource Provider registrieren"
-$providers = @(
-    "Microsoft.ContainerRegistry",
-    "Microsoft.DBforPostgreSQL",
-    "Microsoft.App",
-    "Microsoft.OperationalInsights"
-)
-foreach ($p in $providers) {
+foreach ($p in @("Microsoft.App","Microsoft.OperationalInsights","Microsoft.Storage")) {
     $state = az provider show --namespace $p --query "registrationState" -o tsv 2>$null
     if ($state -eq "Registered") {
         Write-OK "$p (bereits registriert)"
@@ -97,19 +104,15 @@ foreach ($p in $providers) {
         az provider register --namespace $p --output none
     }
 }
-Write-Info "Warte bis alle Provider bereit sind (max. 2 Minuten)..."
-foreach ($p in $providers) {
+Write-Info "Warte bis alle Provider bereit sind..."
+foreach ($p in @("Microsoft.App","Microsoft.OperationalInsights","Microsoft.Storage")) {
     $waited = 0
     do {
-        Start-Sleep -Seconds 5
-        $waited += 5
+        Start-Sleep -Seconds 5; $waited += 5
         $state = az provider show --namespace $p --query "registrationState" -o tsv 2>$null
     } while ($state -ne "Registered" -and $waited -lt 120)
-    if ($state -eq "Registered") {
-        Write-OK "$p registriert"
-    } else {
-        Write-Host "  WARNUNG: $p noch nicht registriert - Skript laeuft trotzdem weiter" -ForegroundColor Yellow
-    }
+    if ($state -eq "Registered") { Write-OK "$p registriert" }
+    else { Write-Host "  WARNUNG: $p noch nicht bereit" -ForegroundColor Yellow }
 }
 
 # ------------------------------------------------------------------------------
@@ -117,234 +120,152 @@ foreach ($p in $providers) {
 # ------------------------------------------------------------------------------
 Write-Step "Resource Group: $RESOURCE_GROUP"
 
-# Warten falls die Gruppe noch geloescht wird (verhindert "ResourceGroupBeingDeleted")
-$existingRg = az group show --name $RESOURCE_GROUP -o json 2>$null
+$existingRg = $null
+try { $existingRg = az group show --name $RESOURCE_GROUP -o json 2>$null } catch {}
 if ($existingRg) {
     $rgState = ($existingRg | ConvertFrom-Json).properties.provisioningState
     if ($rgState -eq "Deleting") {
-        Write-Host "  Resource Group wird noch geloescht - warte auf Abschluss..." -ForegroundColor Yellow
+        Write-Host "  Resource Group wird geloescht - warte..." -ForegroundColor Yellow
         $waited = 0
         do {
-            Start-Sleep -Seconds 15
-            $waited += 15
-            $existingRg = az group show --name $RESOURCE_GROUP -o json 2>$null
-            Write-Host "  ... $waited s gewartet" -ForegroundColor Gray
+            Start-Sleep -Seconds 15; $waited += 15
+            try { $existingRg = az group show --name $RESOURCE_GROUP -o json 2>$null } catch { $existingRg = $null }
         } while ($existingRg -and $waited -lt 300)
-        if ($existingRg) {
-            Write-Error "Resource Group nach 5 Minuten noch nicht geloescht. Bitte manuell pruefen."
-            exit 1
-        }
-        Write-OK "Loeschung abgeschlossen"
     } else {
         Write-OK "Resource Group existiert bereits (State: $rgState)"
     }
 }
-
 az group create --name $RESOURCE_GROUP --location $LOCATION --output none
 Write-OK "Resource Group bereit in $LOCATION"
 
 # ------------------------------------------------------------------------------
-# 3. CONTAINER REGISTRY
+# 3. DOCKER IMAGES BAUEN UND ZU DOCKER HUB PUSHEN
 # ------------------------------------------------------------------------------
-Write-Step "Container Registry: $REGISTRY_NAME"
+Write-Step "Docker Images bauen und zu Docker Hub pushen"
 
-# Pruefe ob Name verfuegbar ist
-$nameCheck = az acr check-name --name $REGISTRY_NAME -o json 2>$null | ConvertFrom-Json
-if ($nameCheck -and -not $nameCheck.nameAvailable) {
-    Write-Host "  WARNUNG: Registry-Name '$REGISTRY_NAME' ist nicht verfuegbar." -ForegroundColor Yellow
-    Write-Host "  Grund: $($nameCheck.reason)" -ForegroundColor Yellow
-    Write-Host "  Bitte $REGISTRY_NAME in der KONFIGURATION oben aendern (z.B. elevatormonitoring2)." -ForegroundColor Yellow
-    $newName = Read-Host "  Neuen Registry-Namen eingeben"
-    if ($newName) { $REGISTRY_NAME = $newName }
-}
+$REGISTRY_SERVER    = "docker.io"
+$POLLER_FULL_IMAGE  = "$DOCKERHUB_USER/${POLLER_IMAGE}:latest"
+$GRAFANA_FULL_IMAGE = "$DOCKERHUB_USER/${GRAFANA_IMAGE}:latest"
+$TSDB_FULL_IMAGE    = "$DOCKERHUB_USER/${TIMESCALEDB_IMAGE}:latest"
 
-az acr create `
-    --resource-group $RESOURCE_GROUP `
-    --name $REGISTRY_NAME `
-    --sku Basic `
-    --admin-enabled true `
-    --output none
-$REGISTRY_SERVER = "$REGISTRY_NAME.azurecr.io"
-Write-OK "Registry: $REGISTRY_SERVER"
+Write-Info "Einloggen in Docker Hub..."
+$DOCKERHUB_TOKEN | docker login docker.io --username $DOCKERHUB_USER --password-stdin
+if ($LASTEXITCODE -ne 0) { Write-Error "Docker Hub Login fehlgeschlagen."; exit 1 }
+Write-OK "Docker Hub Login erfolgreich"
 
-# ------------------------------------------------------------------------------
-# 3. DOCKER IMAGES BAUEN UND PUSHEN
-# ------------------------------------------------------------------------------
-Write-Step "Docker Images lokal bauen und nach Azure pushen"
-# Hinweis: 'az acr build' (Cloud-Build) ist bei Azure for Students gesperrt.
-# Wir bauen die Images lokal mit Docker und pushen sie dann in die Registry.
-
-$dockerCmd = Get-Command docker -ErrorAction SilentlyContinue
-if (-not $dockerCmd) {
-    Write-Error "Docker nicht gefunden. Docker Desktop installieren und starten: https://www.docker.com/products/docker-desktop/"
-    exit 1
-}
-
-Write-Info "Einloggen in Registry..."
-az acr login --name $REGISTRY_NAME
-
-Write-Info "Poller-Image lokal bauen (dauert 3-5 Minuten)..."
-docker build -f Dockerfile -t "$REGISTRY_SERVER/${POLLER_IMAGE}:latest" .
+Write-Info "Poller-Image bauen..."
+docker build -f Dockerfile -t $POLLER_FULL_IMAGE .
 if ($LASTEXITCODE -ne 0) { Write-Error "Docker Build fehlgeschlagen"; exit 1 }
-
 Write-Info "Poller-Image hochladen..."
-docker push "$REGISTRY_SERVER/${POLLER_IMAGE}:latest"
-if ($LASTEXITCODE -ne 0) { Write-Error "Docker Push fehlgeschlagen"; exit 1 }
-Write-OK "Poller-Image gepusht: $REGISTRY_SERVER/${POLLER_IMAGE}:latest"
+Invoke-DockerPush $POLLER_FULL_IMAGE
+Write-OK "Poller-Image gepusht: $POLLER_FULL_IMAGE"
 
-Write-Info "Grafana-Image lokal bauen..."
-docker build -f Dockerfile.grafana -t "$REGISTRY_SERVER/${GRAFANA_IMAGE}:latest" .
+Write-Info "Grafana-Image bauen..."
+docker build -f Dockerfile.grafana -t $GRAFANA_FULL_IMAGE .
 if ($LASTEXITCODE -ne 0) { Write-Error "Docker Build fehlgeschlagen"; exit 1 }
-
 Write-Info "Grafana-Image hochladen..."
-docker push "$REGISTRY_SERVER/${GRAFANA_IMAGE}:latest"
-if ($LASTEXITCODE -ne 0) { Write-Error "Docker Push fehlgeschlagen"; exit 1 }
-Write-OK "Grafana-Image gepusht: $REGISTRY_SERVER/${GRAFANA_IMAGE}:latest"
+Invoke-DockerPush $GRAFANA_FULL_IMAGE
+Write-OK "Grafana-Image gepusht: $GRAFANA_FULL_IMAGE"
+
+Write-Info "TimescaleDB-Image bauen (mit Schema)..."
+docker build -f Dockerfile.timescaledb -t $TSDB_FULL_IMAGE .
+if ($LASTEXITCODE -ne 0) { Write-Error "Docker Build fehlgeschlagen"; exit 1 }
+Write-Info "TimescaleDB-Image hochladen..."
+Invoke-DockerPush $TSDB_FULL_IMAGE
+Write-OK "TimescaleDB-Image gepusht: $TSDB_FULL_IMAGE"
 
 # ------------------------------------------------------------------------------
-# 4. POSTGRESQL FLEXIBLE SERVER
-# ------------------------------------------------------------------------------
-Write-Step "PostgreSQL Flexible Server: $POSTGRES_SERVER"
-
-# try/catch noetig: az gibt Exit-Code != 0 wenn Server nicht existiert,
-# was mit $ErrorActionPreference="Stop" einen Abbruch ausloest
-$pgJson = $null
-try {
-    $pgJson = az postgres flexible-server show `
-        --resource-group $RESOURCE_GROUP `
-        --name $POSTGRES_SERVER `
-        -o json 2>$null
-} catch {
-    $pgJson = $null
-}
-if (-not $pgJson) {
-    Write-Info "Server wird erstellt (dauert 3-5 Minuten)..."
-    az postgres flexible-server create `
-        --resource-group $RESOURCE_GROUP `
-        --name $POSTGRES_SERVER `
-        --location $LOCATION `
-        --admin-user $POSTGRES_ADMIN `
-        --admin-password $POSTGRES_PASSWORD `
-        --sku-name Standard_B1ms `
-        --tier Burstable `
-        --storage-size 32 `
-        --version 16 `
-        --public-access None `
-        --output none
-    Write-OK "Server erstellt"
-} else {
-    Write-OK "Server existiert bereits"
-}
-
-$POSTGRES_FQDN = az postgres flexible-server show `
-    --resource-group $RESOURCE_GROUP `
-    --name $POSTGRES_SERVER `
-    --query "fullyQualifiedDomainName" -o tsv
-Write-OK "FQDN: $POSTGRES_FQDN"
-
-Write-Info "TimescaleDB Extension aktivieren..."
-az postgres flexible-server parameter set `
-    --resource-group $RESOURCE_GROUP `
-    --server-name $POSTGRES_SERVER `
-    --name azure.extensions `
-    --value TIMESCALEDB `
-    --output none
-Write-OK "TimescaleDB Extension aktiviert"
-
-Write-Info "Firewall fuer Azure-Dienste oeffnen..."
-az postgres flexible-server firewall-rule create `
-    --resource-group $RESOURCE_GROUP `
-    --name $POSTGRES_SERVER `
-    --rule-name AllowAllAzureServices `
-    --start-ip-address 0.0.0.0 `
-    --end-ip-address 0.0.0.0 `
-    --output none
-Write-OK "Azure-Firewall-Regel gesetzt"
-
-$LOCAL_IP = (Invoke-RestMethod "https://api.ipify.org")
-Write-Info "Eigene IP $LOCAL_IP temporaer erlauben..."
-az postgres flexible-server firewall-rule create `
-    --resource-group $RESOURCE_GROUP `
-    --name $POSTGRES_SERVER `
-    --rule-name LocalSetup `
-    --start-ip-address $LOCAL_IP `
-    --end-ip-address $LOCAL_IP `
-    --output none
-Write-OK "Temporaere Firewall-Regel gesetzt"
-
-Write-Info "Datenbank $DB_NAME erstellen..."
-try {
-    az postgres flexible-server db create `
-        --resource-group $RESOURCE_GROUP `
-        --server-name $POSTGRES_SERVER `
-        --database-name $DB_NAME `
-        --output none 2>$null
-} catch { <# DB existiert bereits - OK #> }
-Write-OK "Datenbank erstellt"
-
-# Schema einspielen (PS 5.1 kompatibel: kein ?. Operator)
-Write-Step "Datenbank-Schema einspielen"
-$psqlCmd = Get-Command psql -ErrorAction SilentlyContinue
-if ($psqlCmd) {
-    $psqlPath = $psqlCmd.Source
-    Write-Info "psql gefunden: $psqlPath"
-    $env:PGPASSWORD = $POSTGRES_PASSWORD
-    Write-Info "Fuehre schema.sql aus (ca. 30 Sekunden)..."
-    Get-Content schema.sql | psql -h $POSTGRES_FQDN -U $POSTGRES_ADMIN -d $DB_NAME --set=sslmode=require
-    Remove-Item Env:PGPASSWORD -ErrorAction SilentlyContinue
-    Write-OK "Schema eingespielt"
-} else {
-    Write-Host ""
-    Write-Host "  HINWEIS: psql nicht gefunden." -ForegroundColor Yellow
-    Write-Host "  Bitte PostgreSQL-Client installieren:" -ForegroundColor Yellow
-    Write-Host "  https://www.postgresql.org/download/windows/" -ForegroundColor Yellow
-    Write-Host ""
-    Write-Host "  Dann diese zwei Befehle ausfuehren:" -ForegroundColor Yellow
-    Write-Host "  1)  " -NoNewline -ForegroundColor White
-    Write-Host "`$env:PGPASSWORD='$POSTGRES_PASSWORD'" -ForegroundColor Yellow
-    Write-Host "  2)  " -NoNewline -ForegroundColor White
-    Write-Host "  psql -h $POSTGRES_FQDN -U $POSTGRES_ADMIN -d $DB_NAME --set=sslmode=require -f schema.sql" -ForegroundColor Yellow
-    Write-Host ""
-    Read-Host "Enter druecken wenn Schema eingespielt wurde (Strg+C zum Abbrechen)"
-}
-
-Write-Info "Temporaere Firewall-Regel entfernen..."
-try {
-    az postgres flexible-server firewall-rule delete `
-        --resource-group $RESOURCE_GROUP `
-        --name $POSTGRES_SERVER `
-        --rule-name LocalSetup `
-        --yes `
-        --output none 2>$null
-} catch { <# Regel existiert nicht mehr - OK #> }
-Write-OK "Temporaere Regel entfernt"
-
-# ------------------------------------------------------------------------------
-# 5. CONTAINER APPS ENVIRONMENT
+# 4. CONTAINER APPS ENVIRONMENT
 # ------------------------------------------------------------------------------
 Write-Step "Container Apps Environment: $CONTAINER_ENV"
-az containerapp env create `
-    --name $CONTAINER_ENV `
+
+$envExists = $null
+try { $envExists = az containerapp env show --name $CONTAINER_ENV --resource-group $RESOURCE_GROUP -o json 2>$null } catch {}
+if (-not $envExists) {
+    Write-Info "Erstelle Environment (ohne Log Analytics - in Azure for Students gesperrt)..."
+    az containerapp env create `
+        --name $CONTAINER_ENV `
+        --resource-group $RESOURCE_GROUP `
+        --location $LOCATION `
+        --logs-destination none `
+        --output none
+
+    # Pruefen ob Environment wirklich erstellt wurde
+    $envCheck = $null
+    try { $envCheck = az containerapp env show --name $CONTAINER_ENV --resource-group $RESOURCE_GROUP -o json 2>$null } catch {}
+    if (-not $envCheck) {
+        Write-Host ""
+        Write-Host "  FEHLER: Container Apps Environment konnte nicht erstellt werden." -ForegroundColor Red
+        Write-Host "  Region '$LOCATION' ist moeglicherweise fuer Container Apps gesperrt." -ForegroundColor Yellow
+        exit 1
+    }
+    Write-OK "Environment erstellt"
+} else {
+    Write-OK "Environment existiert bereits"
+}
+
+# ------------------------------------------------------------------------------
+# 5. TIMESCALEDB CONTAINER APP
+# Ephemerer Storage (kein Azure Files noetig – Storage Accounts ebenfalls gesperrt).
+# min-replicas=1 haelt den Container dauerhaft am Laufen, Daten bleiben erhalten
+# solange der Container nicht neu gestartet wird.
+# ------------------------------------------------------------------------------
+Write-Step "TimescaleDB Container App deployen"
+
+$tsdbExists = $null
+try { $tsdbExists = az containerapp show --name timescaledb --resource-group $RESOURCE_GROUP -o json 2>$null } catch {}
+if (-not $tsdbExists) {
+    az containerapp create `
+        --name timescaledb `
+        --resource-group $RESOURCE_GROUP `
+        --environment $CONTAINER_ENV `
+        --image $TSDB_FULL_IMAGE `
+        --registry-server docker.io `
+        --registry-username $DOCKERHUB_USER `
+        --registry-password $DOCKERHUB_TOKEN `
+        --min-replicas 1 `
+        --max-replicas 1 `
+        --cpu 0.5 `
+        --memory 1.0Gi `
+        --ingress internal `
+        --transport tcp `
+        --target-port 5432 `
+        --secrets "pg-password=$POSTGRES_PASSWORD" `
+        --env-vars `
+            "POSTGRES_USER=$POSTGRES_ADMIN" `
+            "POSTGRES_PASSWORD=secretref:pg-password" `
+            "POSTGRES_DB=$DB_NAME" `
+        --output none
+    Write-OK "TimescaleDB Container App erstellt"
+} else {
+    Write-OK "TimescaleDB Container App existiert bereits"
+}
+
+Write-Info "Warte 60 Sekunden bis TimescaleDB hochgefahren ist und Schema eingespielt hat..."
+Start-Sleep -Seconds 60
+
+$POSTGRES_FQDN = az containerapp show `
+    --name timescaledb `
     --resource-group $RESOURCE_GROUP `
-    --location $LOCATION `
-    --output none
-Write-OK "Environment erstellt"
+    --query "properties.configuration.ingress.fqdn" -o tsv
+Write-OK "TimescaleDB intern erreichbar unter: ${POSTGRES_FQDN}:5432"
 
-$REGISTRY_USER = az acr credential show --name $REGISTRY_NAME --query "username" -o tsv
-$REGISTRY_PASS = az acr credential show --name $REGISTRY_NAME --query "passwords[0].value" -o tsv
-
+# ------------------------------------------------------------------------------
+# 7. UMGEBUNGSVARIABLEN fuer alle Poller
+# ------------------------------------------------------------------------------
 $DB_ENV_VARS = @(
     "DB_HOST=$POSTGRES_FQDN",
     "DB_PORT=5432",
     "DB_NAME=$DB_NAME",
     "DB_USER=$POSTGRES_ADMIN",
-    "DB_SSLMODE=require",
-    "ELEVISION_API_BASE=https://api.elevision.de/",
+    "DB_SSLMODE=disable",
+    "ELEVISION_API_BASE=https://api.elevision.de",
     "LOG_LEVEL=INFO"
 )
 $DB_SECRETS = @(
     "db-password=$POSTGRES_PASSWORD",
-    "jwt-token=$JWT_TOKEN"
+    "jwt-token=$JWT_TOKEN",
+    "dockerhub-token=$DOCKERHUB_TOKEN"
 )
 $DB_SECRET_REFS = @(
     "DB_PASSWORD=secretref:db-password",
@@ -352,17 +273,17 @@ $DB_SECRET_REFS = @(
 )
 
 # ------------------------------------------------------------------------------
-# 6. GRAFANA CONTAINER APP
+# 8. GRAFANA CONTAINER APP
 # ------------------------------------------------------------------------------
 Write-Step "Grafana deployen"
 az containerapp create `
     --name grafana `
     --resource-group $RESOURCE_GROUP `
     --environment $CONTAINER_ENV `
-    --image "$REGISTRY_SERVER/${GRAFANA_IMAGE}:latest" `
+    --image $GRAFANA_FULL_IMAGE `
     --registry-server $REGISTRY_SERVER `
-    --registry-username $REGISTRY_USER `
-    --registry-password $REGISTRY_PASS `
+    --registry-username $DOCKERHUB_USER `
+    --registry-password $DOCKERHUB_TOKEN `
     --target-port 3000 `
     --ingress external `
     --min-replicas 1 `
@@ -376,7 +297,7 @@ az containerapp create `
         "GF_POSTGRES_HOST=$POSTGRES_FQDN" `
         "GF_POSTGRES_USER=$POSTGRES_ADMIN" `
         "GF_POSTGRES_DB=$DB_NAME" `
-        "GF_POSTGRES_SSLMODE=require" `
+        "GF_POSTGRES_SSLMODE=disable" `
         "GF_POSTGRES_PASSWORD=secretref:gf-postgres-password" `
         "GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/var/lib/grafana/dashboards/elevator_dashboard.json" `
     --output none
@@ -387,17 +308,17 @@ $GRAFANA_URL = az containerapp show `
 Write-OK "Grafana: https://$GRAFANA_URL"
 
 # ------------------------------------------------------------------------------
-# 7. API-POLLER CONTAINER APP
+# 9. API-POLLER
 # ------------------------------------------------------------------------------
-Write-Step "API-Poller deployen (alle 60 s)"
+Write-Step "API-Poller deployen"
 az containerapp create `
     --name api-poller `
     --resource-group $RESOURCE_GROUP `
     --environment $CONTAINER_ENV `
-    --image "$REGISTRY_SERVER/${POLLER_IMAGE}:latest" `
+    --image $POLLER_FULL_IMAGE `
     --registry-server $REGISTRY_SERVER `
-    --registry-username $REGISTRY_USER `
-    --registry-password $REGISTRY_PASS `
+    --registry-username $DOCKERHUB_USER `
+    --registry-password $DOCKERHUB_TOKEN `
     --command "python" "api_poller.py" `
     --min-replicas 1 `
     --max-replicas 1 `
@@ -406,22 +327,22 @@ az containerapp create `
     --ingress internal `
     --target-port 8080 `
     --secrets $DB_SECRETS `
-    --env-vars ($DB_ENV_VARS + $DB_SECRET_REFS + @("METRICS_PORT=8080", "CB_FAILURE_THRESHOLD=5", "CB_RECOVERY_TIMEOUT_SEC=60")) `
+    --env-vars ($DB_ENV_VARS + $DB_SECRET_REFS + @("METRICS_PORT=8080","CB_FAILURE_THRESHOLD=5","CB_RECOVERY_TIMEOUT_SEC=60")) `
     --output none
 Write-OK "API-Poller laeuft"
 
 # ------------------------------------------------------------------------------
-# 8. EXTENDED POLLER CONTAINER APP
+# 10. EXTENDED POLLER
 # ------------------------------------------------------------------------------
-Write-Step "Extended Poller deployen (Fehler, Tueren, Statistiken)"
+Write-Step "Extended Poller deployen"
 az containerapp create `
     --name extended-poller `
     --resource-group $RESOURCE_GROUP `
     --environment $CONTAINER_ENV `
-    --image "$REGISTRY_SERVER/${POLLER_IMAGE}:latest" `
+    --image $POLLER_FULL_IMAGE `
     --registry-server $REGISTRY_SERVER `
-    --registry-username $REGISTRY_USER `
-    --registry-password $REGISTRY_PASS `
+    --registry-username $DOCKERHUB_USER `
+    --registry-password $DOCKERHUB_TOKEN `
     --command "python" "elevision_extended_poller.py" `
     --min-replicas 1 `
     --max-replicas 1 `
@@ -435,39 +356,39 @@ az containerapp create `
 Write-OK "Extended Poller laeuft"
 
 # ------------------------------------------------------------------------------
-# 9. DWD-POLLER CONTAINER APP
+# 11. DWD-POLLER
 # ------------------------------------------------------------------------------
-Write-Step "DWD-Wetter-Poller deployen (stuendlich)"
+Write-Step "DWD-Wetter-Poller deployen"
 az containerapp create `
     --name dwd-poller `
     --resource-group $RESOURCE_GROUP `
     --environment $CONTAINER_ENV `
-    --image "$REGISTRY_SERVER/${POLLER_IMAGE}:latest" `
+    --image $POLLER_FULL_IMAGE `
     --registry-server $REGISTRY_SERVER `
-    --registry-username $REGISTRY_USER `
-    --registry-password $REGISTRY_PASS `
-    --command "/bin/sh" "-c" "python dwd_poller.py --loop" `
+    --registry-username $DOCKERHUB_USER `
+    --registry-password $DOCKERHUB_TOKEN `
+    --command "python" "dwd_poller.py" "--loop" `
     --min-replicas 1 `
     --max-replicas 1 `
     --cpu 0.25 `
     --memory 0.5Gi `
-    --secrets ("db-password=$POSTGRES_PASSWORD") `
-    --env-vars ($DB_ENV_VARS + @("DB_PASSWORD=secretref:db-password", "DWD_STATION_ID=10729", "DWD_POLL_INTERVAL_SEC=3600")) `
+    --secrets @("db-password=$POSTGRES_PASSWORD") `
+    --env-vars ($DB_ENV_VARS + @("DB_PASSWORD=secretref:db-password","DWD_STATION_ID=10729","DWD_POLL_INTERVAL_SEC=3600")) `
     --output none
 Write-OK "DWD-Poller laeuft"
 
 # ------------------------------------------------------------------------------
-# 10. ML-FORECAST JOB (taeglich 02:00 UTC = 04:00 MESZ)
+# 12. ML-FORECAST JOB
 # ------------------------------------------------------------------------------
 Write-Step "ML-Forecast Job deployen"
 az containerapp job create `
     --name forecast-job `
     --resource-group $RESOURCE_GROUP `
     --environment $CONTAINER_ENV `
-    --image "$REGISTRY_SERVER/${POLLER_IMAGE}:latest" `
+    --image $POLLER_FULL_IMAGE `
     --registry-server $REGISTRY_SERVER `
-    --registry-username $REGISTRY_USER `
-    --registry-password $REGISTRY_PASS `
+    --registry-username $DOCKERHUB_USER `
+    --registry-password $DOCKERHUB_TOKEN `
     --trigger-type Schedule `
     --cron-expression "0 2 * * *" `
     --replica-timeout 1800 `
@@ -477,23 +398,23 @@ az containerapp job create `
     --cpu 0.5 `
     --memory 1.0Gi `
     --command "python" "forecast_service.py" `
-    --secrets ("db-password=$POSTGRES_PASSWORD") `
-    --env-vars ($DB_ENV_VARS + @("DB_PASSWORD=secretref:db-password", "FORECAST_HORIZON_DAYS=14", "FORECAST_HISTORY_DAYS=365")) `
+    --secrets @("db-password=$POSTGRES_PASSWORD") `
+    --env-vars ($DB_ENV_VARS + @("DB_PASSWORD=secretref:db-password","FORECAST_HORIZON_DAYS=14","FORECAST_HISTORY_DAYS=365")) `
     --output none
 Write-OK "Forecast-Job registriert (taeglich 02:00 UTC)"
 
 # ------------------------------------------------------------------------------
-# 11. ANOMALIE-ALERTER JOB (taeglich 07:00 UTC = 09:00 MESZ)
+# 13. ANOMALIE-ALERTER JOB
 # ------------------------------------------------------------------------------
 Write-Step "Anomalie-Alerter Job deployen"
 az containerapp job create `
     --name alerter-job `
     --resource-group $RESOURCE_GROUP `
     --environment $CONTAINER_ENV `
-    --image "$REGISTRY_SERVER/${POLLER_IMAGE}:latest" `
+    --image $POLLER_FULL_IMAGE `
     --registry-server $REGISTRY_SERVER `
-    --registry-username $REGISTRY_USER `
-    --registry-password $REGISTRY_PASS `
+    --registry-username $DOCKERHUB_USER `
+    --registry-password $DOCKERHUB_TOKEN `
     --trigger-type Schedule `
     --cron-expression "0 7 * * *" `
     --replica-timeout 600 `
@@ -502,9 +423,9 @@ az containerapp job create `
     --parallelism 1 `
     --cpu 0.25 `
     --memory 0.5Gi `
-    --command "/bin/sh" "-c" "python anomaly_alerter.py --days 1" `
-    --secrets ("db-password=$POSTGRES_PASSWORD") `
-    --env-vars ($DB_ENV_VARS + @("DB_PASSWORD=secretref:db-password", "ALERT_Z_CRITICAL=2.0", "ALERT_Z_WARNING=1.5")) `
+    --command "python" "anomaly_alerter.py" "--days" "1" `
+    --secrets @("db-password=$POSTGRES_PASSWORD") `
+    --env-vars ($DB_ENV_VARS + @("DB_PASSWORD=secretref:db-password","ALERT_Z_CRITICAL=2.0","ALERT_Z_WARNING=1.5")) `
     --output none
 Write-OK "Alerter-Job registriert (taeglich 07:00 UTC)"
 
@@ -520,25 +441,23 @@ Write-Host " Grafana Dashboard:" -ForegroundColor White
 Write-Host "   https://$GRAFANA_URL" -ForegroundColor Yellow
 Write-Host "   Login: admin / admin" -ForegroundColor Gray
 Write-Host ""
-Write-Host " Datenbank:" -ForegroundColor White
+Write-Host " Datenbank (intern):" -ForegroundColor White
 Write-Host "   Host: $POSTGRES_FQDN" -ForegroundColor Gray
 Write-Host "   DB:   $DB_NAME  |  User: $POSTGRES_ADMIN" -ForegroundColor Gray
 Write-Host ""
 Write-Host " Laufende Container Apps:" -ForegroundColor White
-Write-Host "   api-poller      (dauerhaft, alle 60 s)" -ForegroundColor Gray
-Write-Host "   extended-poller (dauerhaft, 1 min - 1 h)" -ForegroundColor Gray
-Write-Host "   dwd-poller      (dauerhaft, alle 60 min)" -ForegroundColor Gray
-Write-Host "   grafana         (dauerhaft, oeffentlich erreichbar)" -ForegroundColor Gray
+Write-Host "   timescaledb     (Datenbank, persistent via Azure Files)" -ForegroundColor Gray
+Write-Host "   grafana         (Dashboard, oeffentlich erreichbar)" -ForegroundColor Gray
+Write-Host "   api-poller      (Aufzugsdaten, alle 60 s)" -ForegroundColor Gray
+Write-Host "   extended-poller (Fehler/Tueren/Statistiken)" -ForegroundColor Gray
+Write-Host "   dwd-poller      (Wetterdaten, stuendlich)" -ForegroundColor Gray
 Write-Host ""
 Write-Host " Geplante Jobs:" -ForegroundColor White
-Write-Host "   forecast-job  (taeglich 02:00 UTC = 04:00 MESZ)" -ForegroundColor Gray
-Write-Host "   alerter-job   (taeglich 07:00 UTC = 09:00 MESZ)" -ForegroundColor Gray
+Write-Host "   forecast-job  (taeglich 02:00 UTC)" -ForegroundColor Gray
+Write-Host "   alerter-job   (taeglich 07:00 UTC)" -ForegroundColor Gray
 Write-Host ""
-Write-Host " Logs live anzeigen:" -ForegroundColor White
+Write-Host " Logs anzeigen:" -ForegroundColor White
 Write-Host "   az containerapp logs show --name api-poller --resource-group $RESOURCE_GROUP --follow" -ForegroundColor Gray
-Write-Host "   az containerapp logs show --name grafana --resource-group $RESOURCE_GROUP --follow" -ForegroundColor Gray
-Write-Host ""
-Write-Host " NAECHSTER SCHRITT - Erstimport (einmalig):" -ForegroundColor White
-Write-Host "   Siehe Anleitung Schritt 3 fuer CSV- und DWD-Import" -ForegroundColor Gray
+Write-Host "   az containerapp logs show --name timescaledb --resource-group $RESOURCE_GROUP --follow" -ForegroundColor Gray
 Write-Host ""
 Write-Host "==============================================================" -ForegroundColor Cyan

@@ -16,7 +16,7 @@ datasources:
       maxIdleConnsAuto: true
       connMaxLifetime: 14400
       postgresVersion: 1600
-      timescaledb: true
+      timescaledb: false
     secureJsonData:
       password: ${GF_POSTGRES_PASSWORD}
     isDefault: true

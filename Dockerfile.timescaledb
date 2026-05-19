@@ -1,0 +1,3 @@
+FROM timescale/timescaledb:latest-pg16
+# Schema beim ersten Start automatisch einspielen
+COPY schema.sql /docker-entrypoint-initdb.d/01_schema.sql
