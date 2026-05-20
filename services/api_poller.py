@@ -100,7 +100,7 @@ DB_CONFIG = {
     "password": os.getenv("DB_PASSWORD", ""),
     "sslmode":  os.getenv("DB_SSLMODE", "prefer"),
 }
-CONFIG_PATH  = Path(os.getenv("POLLER_CONFIG", "poller_config.yaml"))
+CONFIG_PATH  = Path(os.getenv("POLLER_CONFIG", "config/poller_config.yaml"))
 METRICS_PORT = int(os.getenv("METRICS_PORT", "8080"))
 
 # Circuit-Breaker-Schwellen

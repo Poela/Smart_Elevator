@@ -48,7 +48,7 @@ CSV_FILES = {
     "Feuerwehraufzug L-Bau.csv":    "Feuerwehraufzug L-Bau",
 }
 
-CSV_DIR = Path(__file__).parent / "History_Daten_Elevator"
+CSV_DIR = Path(__file__).parent.parent / "History_Daten_Elevator"
 
 
 # ── Datenbankverbindung ─────────────────────────────────────────────────────

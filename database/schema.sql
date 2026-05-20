@@ -579,7 +579,7 @@ SELECT
     wo.wind_speed,
     wo.sunshine_min
 FROM daily_trips dt
-JOIN weather_observations wo
+LEFT JOIN weather_observations wo
     ON date_trunc('day', wo.time) = dt.day
 ORDER BY dt.day, dt.elevator_name;
 
@@ -611,6 +611,7 @@ SELECT
 FROM daily_trips dt
 JOIN daily_weather dw ON dt.day = dw.day
 GROUP BY dt.elevator_name
+HAVING COUNT(*) >= 10
 ORDER BY dt.elevator_name;
 
 -- Ø Fahrten pro Temperaturbereich (Bucket-Analyse)

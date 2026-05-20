@@ -47,7 +47,7 @@
   },
   "panels": [
     {
-      "content": "### [📊 Übersicht](/d/smart-elevator-v1) &nbsp;·&nbsp; [📈 Analyse](/d/smart-elevator-analyse) &nbsp;·&nbsp; [🤖 Steuerung](/d/smart-elevator-api) &nbsp;·&nbsp; [🚨 Fehler](/d/smart-elevator-errors) &nbsp;·&nbsp; 🔧 **Wartung & Gesundheit** &nbsp;·&nbsp; [🚪 Türen](/d/smart-elevator-doors)",
+      "content": "### [ Übersicht](/d/smart-elevator-v1) &nbsp;·&nbsp; [ Analyse](/d/smart-elevator-analyse) &nbsp;·&nbsp; [ Steuerung](/d/smart-elevator-api) &nbsp;·&nbsp; [ Fehler](/d/smart-elevator-errors) &nbsp;·&nbsp;  **Wartung & Gesundheit** &nbsp;·&nbsp; [ Türen](/d/smart-elevator-doors)",
       "gridPos": {
         "h": 2,
         "w": 24,
@@ -58,7 +58,7 @@
       "transparent": true,
       "options": {
         "mode": "markdown",
-        "content": "### [📊 Übersicht](/d/smart-elevator-v1) &nbsp;·&nbsp; [📈 Analyse](/d/smart-elevator-analyse) &nbsp;·&nbsp; [🤖 Steuerung](/d/smart-elevator-api) &nbsp;·&nbsp; [🚨 Fehler](/d/smart-elevator-errors) &nbsp;·&nbsp; 🔧 **Wartung & Gesundheit** &nbsp;·&nbsp; [🚪 Türen](/d/smart-elevator-doors)"
+        "content": "### [ Übersicht](/d/smart-elevator-v1) &nbsp;·&nbsp; [ Analyse](/d/smart-elevator-analyse) &nbsp;·&nbsp; [ Steuerung](/d/smart-elevator-api) &nbsp;·&nbsp; [ Fehler](/d/smart-elevator-errors) &nbsp;·&nbsp;  **Wartung & Gesundheit** &nbsp;·&nbsp; [ Türen](/d/smart-elevator-doors)"
       },
       "type": "text"
     },
@@ -71,7 +71,7 @@
         "y": 2
       },
       "id": 10,
-      "title": "🟢 Verfügbarkeit",
+      "title": "Verfügbarkeit",
       "type": "row"
     },
     {
@@ -223,19 +223,19 @@
                     "options": {
                       "NORMAL": {
                         "color": "#10B981",
-                        "text": "✅ NORMAL"
+                        "text": "NORMAL"
                       },
                       "FAULT": {
                         "color": "#EF4444",
-                        "text": "❌ FAULT"
+                        "text": "FAULT"
                       },
                       "SERVICE": {
                         "color": "#F59E0B",
-                        "text": "🔧 SERVICE"
+                        "text": "SERVICE"
                       },
                       "FUNCTIONAL": {
                         "color": "#3B82F6",
-                        "text": "🔵 FUNCTIONAL"
+                        "text": "FUNCTIONAL"
                       }
                     }
                   }
@@ -272,7 +272,7 @@
           },
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT DISTINCT ON (e.name) e.name AS \"Aufzug\", ROUND(availability_pct::numeric, 1) AS \"Verfügbarkeit %\", operating_category AS \"Status\", CASE WHEN online THEN '🟢 Online' ELSE '🔴 Offline' END AS \"Verbindung\", to_char(ea.time AT TIME ZONE 'Europe/Berlin', 'DD.MM. HH24:MI') AS \"Letzter Check\" FROM elevator_availability ea JOIN elevators e ON e.id = ea.elevator_id WHERE e.name IN ($elevator) ORDER BY e.name, ea.time DESC",
+          "rawSql": "SELECT DISTINCT ON (e.name) e.name AS \"Aufzug\", ROUND(availability_pct::numeric, 1) AS \"Verfügbarkeit %\", operating_category AS \"Status\", CASE WHEN online THEN ' Online' ELSE ' Offline' END AS \"Verbindung\", to_char(ea.time AT TIME ZONE 'Europe/Berlin', 'DD.MM. HH24:MI') AS \"Letzter Check\" FROM elevator_availability ea JOIN elevators e ON e.id = ea.elevator_id WHERE e.name IN ($elevator) ORDER BY e.name, ea.time DESC",
           "refId": "A"
         }
       ]
@@ -345,7 +345,7 @@
         "y": 17
       },
       "id": 20,
-      "title": "⚙️ Motorstatistik & Fahrten",
+      "title": "Motorstatistik & Fahrten",
       "type": "row"
     },
     {
@@ -477,7 +477,7 @@
         "y": 26
       },
       "id": 30,
-      "title": "⏱️ Zeitverteilung (Fahrt / Leerlauf / Laden)",
+      "title": "Zeitverteilung (Fahrt / Leerlauf / Laden)",
       "type": "row"
     },
     {
@@ -630,7 +630,7 @@
         "y": 36
       },
       "id": 40,
-      "title": "🌦️ Korrelation: Auslastung & Wetter",
+      "title": "Korrelation: Auslastung & Wetter",
       "type": "row"
     },
     {
@@ -810,6 +810,56 @@
           "refId": "B"
         }
       ]
+    }
+  ],
+  "links": [
+    {
+      "title": "Übersicht",
+      "type": "link",
+      "url": "/d/smart-elevator-v1",
+      "targetBlank": false,
+      "icon": "dashboard",
+      "tooltip": "Live-Status & Nutzungsübersicht"
+    },
+    {
+      "title": "Analyse & Prognose",
+      "type": "link",
+      "url": "/d/smart-elevator-analyse",
+      "targetBlank": false,
+      "icon": "chart-line",
+      "tooltip": "Verhaltensanalyse, Forecast & Wetter-Korrelation"
+    },
+    {
+      "title": "Prädiktive Steuerung",
+      "type": "link",
+      "url": "/d/smart-elevator-api",
+      "targetBlank": false,
+      "icon": "bolt",
+      "tooltip": "Empfehlungssystem & API-Live-Daten"
+    },
+    {
+      "title": "Türen & Mechanik",
+      "type": "link",
+      "url": "/d/smart-elevator-doors",
+      "targetBlank": false,
+      "icon": "door-open",
+      "tooltip": "Türstatistiken & Mechanik-Daten"
+    },
+    {
+      "title": "Fehler & Ereignisse",
+      "type": "link",
+      "url": "/d/smart-elevator-errors",
+      "targetBlank": false,
+      "icon": "bell",
+      "tooltip": "Fehlercodes & Ereignisprotokoll"
+    },
+    {
+      "title": "Wartung & Gesundheit",
+      "type": "link",
+      "url": "/d/smart-elevator-maintenance",
+      "targetBlank": false,
+      "icon": "heart",
+      "tooltip": "Wartungsintervalle & System-Gesundheit"
     }
   ]
 }

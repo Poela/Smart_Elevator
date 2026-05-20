@@ -80,7 +80,7 @@
   },
   "panels": [
     {
-      "content": "### [📊 Übersicht](/d/smart-elevator-v1) &nbsp;·&nbsp; [📈 Analyse](/d/smart-elevator-analyse) &nbsp;·&nbsp; [🤖 Steuerung](/d/smart-elevator-api) &nbsp;·&nbsp; [🚨 Fehler](/d/smart-elevator-errors) &nbsp;·&nbsp; [🔧 Wartung](/d/smart-elevator-maintenance) &nbsp;·&nbsp; 🚪 **Türen & Mechanik**",
+      "content": "### [ Übersicht](/d/smart-elevator-v1) &nbsp;·&nbsp; [ Analyse](/d/smart-elevator-analyse) &nbsp;·&nbsp; [ Steuerung](/d/smart-elevator-api) &nbsp;·&nbsp; [ Fehler](/d/smart-elevator-errors) &nbsp;·&nbsp; [ Wartung](/d/smart-elevator-maintenance) &nbsp;·&nbsp;  **Türen & Mechanik**",
       "gridPos": {
         "h": 2,
         "w": 24,
@@ -91,7 +91,7 @@
       "transparent": true,
       "options": {
         "mode": "markdown",
-        "content": "### [📊 Übersicht](/d/smart-elevator-v1) &nbsp;·&nbsp; [📈 Analyse](/d/smart-elevator-analyse) &nbsp;·&nbsp; [🤖 Steuerung](/d/smart-elevator-api) &nbsp;·&nbsp; [🚨 Fehler](/d/smart-elevator-errors) &nbsp;·&nbsp; [🔧 Wartung](/d/smart-elevator-maintenance) &nbsp;·&nbsp; 🚪 **Türen & Mechanik**"
+        "content": "### [ Übersicht](/d/smart-elevator-v1) &nbsp;·&nbsp; [ Analyse](/d/smart-elevator-analyse) &nbsp;·&nbsp; [ Steuerung](/d/smart-elevator-api) &nbsp;·&nbsp; [ Fehler](/d/smart-elevator-errors) &nbsp;·&nbsp; [ Wartung](/d/smart-elevator-maintenance) &nbsp;·&nbsp;  **Türen & Mechanik**"
       },
       "type": "text"
     },
@@ -104,7 +104,7 @@
         "y": 2
       },
       "id": 10,
-      "title": "🔢 Tür-KPIs",
+      "title": "Tür-KPIs",
       "type": "row"
     },
     {
@@ -372,7 +372,7 @@
         "y": 7
       },
       "id": 20,
-      "title": "📈 Zeitverläufe",
+      "title": "Zeitverläufe",
       "type": "row"
     },
     {
@@ -620,7 +620,7 @@
         "y": 25
       },
       "id": 30,
-      "title": "🌦️ Korrelation: Türen & Wetter",
+      "title": "Korrelation: Türen & Wetter",
       "type": "row"
     },
     {
@@ -856,6 +856,56 @@
           "refId": "A"
         }
       ]
+    }
+  ],
+  "links": [
+    {
+      "title": "Übersicht",
+      "type": "link",
+      "url": "/d/smart-elevator-v1",
+      "targetBlank": false,
+      "icon": "dashboard",
+      "tooltip": "Live-Status & Nutzungsübersicht"
+    },
+    {
+      "title": "Analyse & Prognose",
+      "type": "link",
+      "url": "/d/smart-elevator-analyse",
+      "targetBlank": false,
+      "icon": "chart-line",
+      "tooltip": "Verhaltensanalyse, Forecast & Wetter-Korrelation"
+    },
+    {
+      "title": "Prädiktive Steuerung",
+      "type": "link",
+      "url": "/d/smart-elevator-api",
+      "targetBlank": false,
+      "icon": "bolt",
+      "tooltip": "Empfehlungssystem & API-Live-Daten"
+    },
+    {
+      "title": "Türen & Mechanik",
+      "type": "link",
+      "url": "/d/smart-elevator-doors",
+      "targetBlank": false,
+      "icon": "door-open",
+      "tooltip": "Türstatistiken & Mechanik-Daten"
+    },
+    {
+      "title": "Fehler & Ereignisse",
+      "type": "link",
+      "url": "/d/smart-elevator-errors",
+      "targetBlank": false,
+      "icon": "bell",
+      "tooltip": "Fehlercodes & Ereignisprotokoll"
+    },
+    {
+      "title": "Wartung & Gesundheit",
+      "type": "link",
+      "url": "/d/smart-elevator-maintenance",
+      "targetBlank": false,
+      "icon": "heart",
+      "tooltip": "Wartungsintervalle & System-Gesundheit"
     }
   ]
 }

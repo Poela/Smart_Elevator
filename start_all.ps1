@@ -24,16 +24,16 @@ if ((-not $dbOk) -or (-not $grafanaOk)) {
 
 # 2. Aktuelle Wetterdaten nachholen
 Write-Host "Lade aktuelle DWD-Wetterdaten..." -ForegroundColor Cyan
-& $Python "$Root\dwd_history_importer.py" --range recent
+& $Python "$Root\services\dwd_history_importer.py" --range recent
 Write-Host "  OK  DWD-Daten importiert." -ForegroundColor Green
 
 # 3. Poller in separaten Fenstern starten
 $pollers = @(
-    @{ Title = "DWD Wetter-Poller";              Script = "dwd_poller.py --loop";               Color = "Blue"      },
-    @{ Title = "Elevision API-Poller";            Script = "api_poller.py";                      Color = "Green"     },
-    @{ Title = "Elevision Extended Poller";       Script = "elevision_extended_poller.py";        Color = "DarkGreen" },
-    @{ Title = "ML-Forecast Service";             Script = "forecast_service.py --loop";          Color = "Magenta"   },
-    @{ Title = "Anomalie-Alerter";               Script = "anomaly_alerter.py --loop";           Color = "Yellow"    }
+    @{ Title = "DWD Wetter-Poller";              Script = "services\dwd_poller.py --loop";               Color = "Blue"      },
+    @{ Title = "Elevision API-Poller";            Script = "services\api_poller.py";                      Color = "Green"     },
+    @{ Title = "Elevision Extended Poller";       Script = "services\elevision_extended_poller.py";        Color = "DarkGreen" },
+    @{ Title = "ML-Forecast Service";             Script = "services\forecast_service.py --loop";          Color = "Magenta"   },
+    @{ Title = "Anomalie-Alerter";               Script = "services\anomaly_alerter.py --loop";           Color = "Yellow"    }
 )
 
 foreach ($p in $pollers) {

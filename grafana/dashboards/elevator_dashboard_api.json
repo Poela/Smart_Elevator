@@ -38,7 +38,7 @@
   },
   "links": [
     {
-      "title": "📊 Übersicht",
+      "title": "Übersicht",
       "type": "link",
       "url": "/d/smart-elevator-v1",
       "targetBlank": false,
@@ -46,7 +46,7 @@
       "tooltip": "Live-Status & Nutzungsübersicht"
     },
     {
-      "title": "📈 Analyse & Prognose",
+      "title": "Analyse & Prognose",
       "type": "link",
       "url": "/d/smart-elevator-analyse",
       "targetBlank": false,
@@ -54,12 +54,36 @@
       "tooltip": "Verhaltensanalyse, Forecast & Wetter-Korrelation"
     },
     {
-      "title": "🤖 Prädiktive Steuerung",
+      "title": "Prädiktive Steuerung",
       "type": "link",
       "url": "/d/smart-elevator-api",
       "targetBlank": false,
       "icon": "bolt",
-      "tooltip": "Aktive Ansicht – Empfehlungssystem & API"
+      "tooltip": "Empfehlungssystem & API-Live-Daten"
+    },
+    {
+      "title": "Türen & Mechanik",
+      "type": "link",
+      "url": "/d/smart-elevator-doors",
+      "targetBlank": false,
+      "icon": "door-open",
+      "tooltip": "Türstatistiken & Mechanik-Daten"
+    },
+    {
+      "title": "Fehler & Ereignisse",
+      "type": "link",
+      "url": "/d/smart-elevator-errors",
+      "targetBlank": false,
+      "icon": "bell",
+      "tooltip": "Fehlercodes & Ereignisprotokoll"
+    },
+    {
+      "title": "Wartung & Gesundheit",
+      "type": "link",
+      "url": "/d/smart-elevator-maintenance",
+      "targetBlank": false,
+      "icon": "heart",
+      "tooltip": "Wartungsintervalle & System-Gesundheit"
     }
   ],
   "templating": {
@@ -86,12 +110,40 @@
         "regex": "",
         "sort": 1,
         "type": "query"
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": "Aus",
+          "value": "Aus"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "label": "Datenlücken ausblenden",
+        "description": "Ein: filtert Zeiträume ohne Daten (wirkt ab > 30 Tage Auswahl)",
+        "multi": false,
+        "name": "filter_gaps",
+        "options": [
+          {
+            "selected": true,
+            "text": "Aus",
+            "value": "Aus"
+          },
+          {
+            "selected": false,
+            "text": "Ein",
+            "value": "Ein"
+          }
+        ],
+        "query": "Aus,Ein",
+        "refresh": 0,
+        "type": "custom"
       }
     ]
   },
   "panels": [
     {
-      "content": "### [📊 Übersicht](/d/smart-elevator-v1)  ·  [📈 Analyse](/d/smart-elevator-analyse)  ·  🤖 **Steuerung**  ·  [🚨 Fehler](/d/smart-elevator-errors)  ·  [🔧 Wartung](/d/smart-elevator-maintenance)  ·  [🚪 Türen](/d/smart-elevator-doors)",
+      "content": "### [ Übersicht](/d/smart-elevator-v1)  ·  [ Analyse](/d/smart-elevator-analyse)  ·   **Steuerung**  ·  [ Fehler](/d/smart-elevator-errors)  ·  [ Wartung](/d/smart-elevator-maintenance)  ·  [ Türen](/d/smart-elevator-doors)",
       "gridPos": {
         "h": 2,
         "w": 24,
@@ -105,7 +157,7 @@
           "showLineNumbers": false,
           "showMiniMap": false
         },
-        "content": "### [📊 Übersicht](/d/smart-elevator-v1)  ·  [📈 Analyse](/d/smart-elevator-analyse)  ·  🤖 **Steuerung**  ·  [🚨 Fehler](/d/smart-elevator-errors)  ·  [🔧 Wartung](/d/smart-elevator-maintenance)  ·  [🚪 Türen](/d/smart-elevator-doors)",
+        "content": "### [ Übersicht](/d/smart-elevator-v1)  ·  [ Analyse](/d/smart-elevator-analyse)  ·   **Steuerung**  ·  [ Fehler](/d/smart-elevator-errors)  ·  [ Wartung](/d/smart-elevator-maintenance)  ·  [ Türen](/d/smart-elevator-doors)",
         "mode": "markdown"
       },
       "title": "",
@@ -121,7 +173,7 @@
         "y": 2
       },
       "id": 500,
-      "title": "⚡ Aktuelle Stunde – Empfohlene Positionen",
+      "title": "Aktuelle Stunde – Empfohlene Positionen",
       "type": "row"
     },
     {
@@ -460,11 +512,11 @@
         "y": 8
       },
       "id": 510,
-      "title": "🤖 Prädiktive Positionierung – Tagesübersicht",
+      "title": "Prädiktive Positionierung – Tagesübersicht",
       "type": "row"
     },
     {
-      "content": "#### Wie funktioniert das System?\n\nFür jede Stunde des Tages wird statistisch ermittelt, **in welchem Stockwerk sich der Aufzug historisch am häufigsten befunden hat**. Dieses Stockwerk wird als Zielposition empfohlen, wenn der Aufzug gerade nicht aktiv genutzt wird.\n\n| Konfidenz | Bedeutung | Empfohlene Aktion |\n|-----------|-----------|-------------------|\n| 🟢 > 70 % | Eindeutiges Muster | Automatische Vorpositionierung aktivieren |\n| 🟡 40–70 % | Moderates Muster | Empfehlung mit manueller Freigabe |\n| 🔴 < 40 % | Unklares Muster | Aufzug verbleibt an aktueller Position |\n\n> **Status:** API-Anbindung ausstehend. Empfehlungslogik vollständig berechnet – wartet auf Aktivierung.",
+      "content": "#### Wie funktioniert das System?\n\nFür jede Stunde des Tages wird statistisch ermittelt, **in welchem Stockwerk sich der Aufzug historisch am häufigsten befunden hat**. Dieses Stockwerk wird als Zielposition empfohlen, wenn der Aufzug gerade nicht aktiv genutzt wird.\n\n| Konfidenz | Bedeutung | Empfohlene Aktion |\n|-----------|-----------|-------------------|\n|  > 70 % | Eindeutiges Muster | Automatische Vorpositionierung aktivieren |\n|  40–70 % | Moderates Muster | Empfehlung mit manueller Freigabe |\n|  < 40 % | Unklares Muster | Aufzug verbleibt an aktueller Position |\n\n> **Status:** API-Anbindung ausstehend. Empfehlungslogik vollständig berechnet – wartet auf Aktivierung.",
       "gridPos": {
         "h": 7,
         "w": 24,
@@ -478,7 +530,7 @@
           "showLineNumbers": false,
           "showMiniMap": false
         },
-        "content": "#### Wie funktioniert das System?\n\nFür jede Stunde des Tages wird statistisch ermittelt, **in welchem Stockwerk sich der Aufzug historisch am häufigsten befunden hat**. Dieses Stockwerk wird als Zielposition empfohlen, wenn der Aufzug gerade nicht aktiv genutzt wird.\n\n| Konfidenz | Bedeutung | Empfohlene Aktion |\n|-----------|-----------|-------------------|\n| 🟢 > 70 % | Eindeutiges Muster | Automatische Vorpositionierung aktivieren |\n| 🟡 40–70 % | Moderates Muster | Empfehlung mit manueller Freigabe |\n| 🔴 < 40 % | Unklares Muster | Aufzug verbleibt an aktueller Position |\n\n> **Status:** API-Anbindung ausstehend. Empfehlungslogik vollständig berechnet – wartet auf Aktivierung.",
+        "content": "#### Wie funktioniert das System?\n\nFür jede Stunde des Tages wird statistisch ermittelt, **in welchem Stockwerk sich der Aufzug historisch am häufigsten befunden hat**. Dieses Stockwerk wird als Zielposition empfohlen, wenn der Aufzug gerade nicht aktiv genutzt wird.\n\n| Konfidenz | Bedeutung | Empfohlene Aktion |\n|-----------|-----------|-------------------|\n|  > 70 % | Eindeutiges Muster | Automatische Vorpositionierung aktivieren |\n|  40–70 % | Moderates Muster | Empfehlung mit manueller Freigabe |\n|  < 40 % | Unklares Muster | Aufzug verbleibt an aktueller Position |\n\n> **Status:** API-Anbindung ausstehend. Empfehlungslogik vollständig berechnet – wartet auf Aktivierung.",
         "mode": "markdown"
       },
       "title": "",
@@ -621,7 +673,7 @@
         "y": 29
       },
       "id": 530,
-      "title": "🗺️ Stockwerk-Verteilung nach Tagesstunde",
+      "title": "Stockwerk-Verteilung nach Tagesstunde",
       "type": "row"
     },
     {
@@ -790,7 +842,7 @@
         "y": 39
       },
       "id": 540,
-      "title": "🔌 API Live-Daten (Elevision)",
+      "title": "API Live-Daten (Elevision)",
       "type": "row"
     },
     {
@@ -1010,7 +1062,7 @@
           },
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT date_trunc('hour', time) AS \"time\", COUNT(*) AS \"Ereignisse\" FROM elevator_events WHERE source = 'api' AND $__timeFilter(time) GROUP BY 1 ORDER BY 1",
+          "rawSql": "SELECT date_trunc('hour', time) AS \"time\", COUNT(*) AS \"Ereignisse\" FROM elevator_events WHERE source = 'api' AND $__timeFilter(time) GROUP BY 1\nHAVING ('${filter_gaps}' = 'Aus' OR ($__timeTo()::timestamp - $__timeFrom()::timestamp) <= interval '30 days' OR COUNT(*) > 0)\nORDER BY 1",
           "refId": "A"
         }
       ]
@@ -1221,7 +1273,7 @@
           },
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT date_trunc('hour', time) AS \"time\", COUNT(*) AS \"Aufzug links L-Bau\" FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Aufzug links L-Bau' AND source = 'api' AND $__timeFilter(ev.time) GROUP BY 1 ORDER BY 1",
+          "rawSql": "SELECT date_trunc('hour', time) AS \"time\", COUNT(*) AS \"Aufzug links L-Bau\" FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Aufzug links L-Bau' AND source = 'api' AND $__timeFilter(ev.time) GROUP BY 1\nHAVING ('${filter_gaps}' = 'Aus' OR ($__timeTo()::timestamp - $__timeFrom()::timestamp) <= interval '30 days' OR COUNT(*) > 0)\nORDER BY 1",
           "refId": "A"
         },
         {
@@ -1231,7 +1283,7 @@
           },
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT date_trunc('hour', time) AS \"time\", COUNT(*) AS \"Aufzug rechts L-Bau\" FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Aufzug rechts L-Bau' AND source = 'api' AND $__timeFilter(ev.time) GROUP BY 1 ORDER BY 1",
+          "rawSql": "SELECT date_trunc('hour', time) AS \"time\", COUNT(*) AS \"Aufzug rechts L-Bau\" FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Aufzug rechts L-Bau' AND source = 'api' AND $__timeFilter(ev.time) GROUP BY 1\nHAVING ('${filter_gaps}' = 'Aus' OR ($__timeTo()::timestamp - $__timeFrom()::timestamp) <= interval '30 days' OR COUNT(*) > 0)\nORDER BY 1",
           "refId": "B"
         },
         {
@@ -1241,7 +1293,7 @@
           },
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT date_trunc('hour', time) AS \"time\", COUNT(*) AS \"Campus Brücken HN West\" FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Campus Brücken HN West' AND source = 'api' AND $__timeFilter(ev.time) GROUP BY 1 ORDER BY 1",
+          "rawSql": "SELECT date_trunc('hour', time) AS \"time\", COUNT(*) AS \"Campus Brücken HN West\" FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Campus Brücken HN West' AND source = 'api' AND $__timeFilter(ev.time) GROUP BY 1\nHAVING ('${filter_gaps}' = 'Aus' OR ($__timeTo()::timestamp - $__timeFrom()::timestamp) <= interval '30 days' OR COUNT(*) > 0)\nORDER BY 1",
           "refId": "C"
         },
         {
@@ -1251,7 +1303,7 @@
           },
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT date_trunc('hour', time) AS \"time\", COUNT(*) AS \"Campus Brücken HN Ost\" FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Campus Brücken HN Ost' AND source = 'api' AND $__timeFilter(ev.time) GROUP BY 1 ORDER BY 1",
+          "rawSql": "SELECT date_trunc('hour', time) AS \"time\", COUNT(*) AS \"Campus Brücken HN Ost\" FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Campus Brücken HN Ost' AND source = 'api' AND $__timeFilter(ev.time) GROUP BY 1\nHAVING ('${filter_gaps}' = 'Aus' OR ($__timeTo()::timestamp - $__timeFrom()::timestamp) <= interval '30 days' OR COUNT(*) > 0)\nORDER BY 1",
           "refId": "D"
         },
         {
@@ -1261,7 +1313,7 @@
           },
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT date_trunc('hour', time) AS \"time\", COUNT(*) AS \"Teststand lipah Aufzüge Heilbronn\" FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Teststand lipah Aufzüge Heilbronn' AND source = 'api' AND $__timeFilter(ev.time) GROUP BY 1 ORDER BY 1",
+          "rawSql": "SELECT date_trunc('hour', time) AS \"time\", COUNT(*) AS \"Teststand lipah Aufzüge Heilbronn\" FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Teststand lipah Aufzüge Heilbronn' AND source = 'api' AND $__timeFilter(ev.time) GROUP BY 1\nHAVING ('${filter_gaps}' = 'Aus' OR ($__timeTo()::timestamp - $__timeFrom()::timestamp) <= interval '30 days' OR COUNT(*) > 0)\nORDER BY 1",
           "refId": "E"
         }
       ]

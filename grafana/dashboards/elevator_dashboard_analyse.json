@@ -39,7 +39,7 @@
   },
   "links": [
     {
-      "title": "📊 Übersicht",
+      "title": "Übersicht",
       "type": "link",
       "url": "/d/smart-elevator-v1",
       "targetBlank": false,
@@ -47,20 +47,44 @@
       "tooltip": "Live-Status & Nutzungsübersicht"
     },
     {
-      "title": "📈 Analyse & Prognose",
+      "title": "Analyse & Prognose",
       "type": "link",
       "url": "/d/smart-elevator-analyse",
       "targetBlank": false,
       "icon": "chart-line",
-      "tooltip": "Aktive Ansicht – Verhaltensanalyse, Forecast & Wetter"
+      "tooltip": "Verhaltensanalyse, Forecast & Wetter-Korrelation"
     },
     {
-      "title": "🤖 Prädiktive Steuerung",
+      "title": "Prädiktive Steuerung",
       "type": "link",
       "url": "/d/smart-elevator-api",
       "targetBlank": false,
       "icon": "bolt",
       "tooltip": "Empfehlungssystem & API-Live-Daten"
+    },
+    {
+      "title": "Türen & Mechanik",
+      "type": "link",
+      "url": "/d/smart-elevator-doors",
+      "targetBlank": false,
+      "icon": "door-open",
+      "tooltip": "Türstatistiken & Mechanik-Daten"
+    },
+    {
+      "title": "Fehler & Ereignisse",
+      "type": "link",
+      "url": "/d/smart-elevator-errors",
+      "targetBlank": false,
+      "icon": "bell",
+      "tooltip": "Fehlercodes & Ereignisprotokoll"
+    },
+    {
+      "title": "Wartung & Gesundheit",
+      "type": "link",
+      "url": "/d/smart-elevator-maintenance",
+      "targetBlank": false,
+      "icon": "heart",
+      "tooltip": "Wartungsintervalle & System-Gesundheit"
     }
   ],
   "templating": {
@@ -118,12 +142,40 @@
         ],
         "query": "day,week,month",
         "type": "custom"
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": "Aus",
+          "value": "Aus"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "label": "Datenlücken ausblenden",
+        "description": "Ein: filtert Zeiträume ohne Daten (wirkt ab > 30 Tage Auswahl)",
+        "multi": false,
+        "name": "filter_gaps",
+        "options": [
+          {
+            "selected": true,
+            "text": "Aus",
+            "value": "Aus"
+          },
+          {
+            "selected": false,
+            "text": "Ein",
+            "value": "Ein"
+          }
+        ],
+        "query": "Aus,Ein",
+        "refresh": 0,
+        "type": "custom"
       }
     ]
   },
   "panels": [
     {
-      "content": "### [📊 Übersicht](/d/smart-elevator-v1)  ·  📈 **Analyse**  ·  [🤖 Steuerung](/d/smart-elevator-api)  ·  [🚨 Fehler](/d/smart-elevator-errors)  ·  [🔧 Wartung](/d/smart-elevator-maintenance)  ·  [🚪 Türen](/d/smart-elevator-doors)",
+      "content": "### [ Übersicht](/d/smart-elevator-v1)  ·   **Analyse**  ·  [ Steuerung](/d/smart-elevator-api)  ·  [ Fehler](/d/smart-elevator-errors)  ·  [ Wartung](/d/smart-elevator-maintenance)  ·  [ Türen](/d/smart-elevator-doors)",
       "gridPos": {
         "h": 2,
         "w": 24,
@@ -137,7 +189,7 @@
           "showLineNumbers": false,
           "showMiniMap": false
         },
-        "content": "### [📊 Übersicht](/d/smart-elevator-v1)  ·  📈 **Analyse**  ·  [🤖 Steuerung](/d/smart-elevator-api)  ·  [🚨 Fehler](/d/smart-elevator-errors)  ·  [🔧 Wartung](/d/smart-elevator-maintenance)  ·  [🚪 Türen](/d/smart-elevator-doors)",
+        "content": "### [ Übersicht](/d/smart-elevator-v1)  ·   **Analyse**  ·  [ Steuerung](/d/smart-elevator-api)  ·  [ Fehler](/d/smart-elevator-errors)  ·  [ Wartung](/d/smart-elevator-maintenance)  ·  [ Türen](/d/smart-elevator-doors)",
         "mode": "markdown"
       },
       "title": "",
@@ -153,7 +205,7 @@
         "y": 2
       },
       "id": 104,
-      "title": "🕐 Verhaltensanalyse nach Tageszeit",
+      "title": "Verhaltensanalyse nach Tageszeit",
       "type": "row"
     },
     {
@@ -572,7 +624,7 @@
           },
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT LPAD(hour_of_day::text, 2, '0') || ':00 Uhr' AS \"Tageszeit\", ROUND(AVG(avg_trips_per_hour)::numeric, 2) AS \"Ø Fahrten\", CASE WHEN hour_of_day BETWEEN 7 AND 9 THEN '☀️ Arbeitsbeginn' WHEN hour_of_day BETWEEN 11 AND 13 THEN '🍽️ Mittagspause' WHEN hour_of_day BETWEEN 16 AND 18 THEN '🏠 Feierabend' ELSE '' END AS \"Zeitfenster\" FROM v_hourly_pattern WHERE elevator_name IN ($elevator) GROUP BY hour_of_day ORDER BY \"Ø Fahrten\" DESC LIMIT 10",
+          "rawSql": "SELECT LPAD(hour_of_day::text, 2, '0') || ':00 Uhr' AS \"Tageszeit\", ROUND(AVG(avg_trips_per_hour)::numeric, 2) AS \"Ø Fahrten\", CASE WHEN hour_of_day BETWEEN 7 AND 9 THEN ' Arbeitsbeginn' WHEN hour_of_day BETWEEN 11 AND 13 THEN ' Mittagspause' WHEN hour_of_day BETWEEN 16 AND 18 THEN ' Feierabend' ELSE '' END AS \"Zeitfenster\" FROM v_hourly_pattern WHERE elevator_name IN ($elevator) GROUP BY hour_of_day ORDER BY \"Ø Fahrten\" DESC LIMIT 10",
           "refId": "A"
         }
       ]
@@ -586,7 +638,7 @@
         "y": 20
       },
       "id": 105,
-      "title": "🔮 Forecast & Trendprognose",
+      "title": "Forecast & Trendprognose",
       "type": "row"
     },
     {
@@ -834,7 +886,7 @@
           },
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT date_trunc('day', time) AS \"time\", COUNT(*) AS \"Links L-Bau\" FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Aufzug links L-Bau' AND $__timeFilter(ev.time) GROUP BY 1 ORDER BY 1",
+          "rawSql": "SELECT date_trunc('day', time) AS \"time\", COUNT(*) AS \"Links L-Bau\" FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Aufzug links L-Bau' AND $__timeFilter(ev.time) GROUP BY 1\nHAVING ('${filter_gaps}' = 'Aus' OR ($__timeTo()::timestamp - $__timeFrom()::timestamp) <= interval '30 days' OR COUNT(*) > 0)\nORDER BY 1",
           "refId": "A"
         },
         {
@@ -844,7 +896,7 @@
           },
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT day AS \"time\", ROUND(AVG(cnt) OVER (ORDER BY day ROWS BETWEEN 6 PRECEDING AND CURRENT ROW)::numeric, 1) AS \"7-Tage-Trend (Links)\" FROM (SELECT date_trunc('day', time) AS day, COUNT(*) AS cnt FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Aufzug links L-Bau' AND $__timeFilter(ev.time) GROUP BY 1) t ORDER BY day",
+          "rawSql": "SELECT day AS \"time\", ROUND(AVG(cnt) OVER (ORDER BY day RANGE BETWEEN INTERVAL '6 days' PRECEDING AND CURRENT ROW)::numeric, 1) AS \"7-Tage-Trend (Links)\" FROM (SELECT date_trunc('day', time) AS day, COUNT(*) AS cnt FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Aufzug links L-Bau' AND $__timeFilter(ev.time) GROUP BY 1) t ORDER BY day",
           "refId": "B"
         },
         {
@@ -854,7 +906,7 @@
           },
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT date_trunc('day', time) AS \"time\", COUNT(*) AS \"Rechts L-Bau\" FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Aufzug rechts L-Bau' AND $__timeFilter(ev.time) GROUP BY 1 ORDER BY 1",
+          "rawSql": "SELECT date_trunc('day', time) AS \"time\", COUNT(*) AS \"Rechts L-Bau\" FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Aufzug rechts L-Bau' AND $__timeFilter(ev.time) GROUP BY 1\nHAVING ('${filter_gaps}' = 'Aus' OR ($__timeTo()::timestamp - $__timeFrom()::timestamp) <= interval '30 days' OR COUNT(*) > 0)\nORDER BY 1",
           "refId": "C"
         },
         {
@@ -864,7 +916,7 @@
           },
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT day AS \"time\", ROUND(AVG(cnt) OVER (ORDER BY day ROWS BETWEEN 6 PRECEDING AND CURRENT ROW)::numeric, 1) AS \"7-Tage-Trend (Rechts)\" FROM (SELECT date_trunc('day', time) AS day, COUNT(*) AS cnt FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Aufzug rechts L-Bau' AND $__timeFilter(ev.time) GROUP BY 1) t ORDER BY day",
+          "rawSql": "SELECT day AS \"time\", ROUND(AVG(cnt) OVER (ORDER BY day RANGE BETWEEN INTERVAL '6 days' PRECEDING AND CURRENT ROW)::numeric, 1) AS \"7-Tage-Trend (Rechts)\" FROM (SELECT date_trunc('day', time) AS day, COUNT(*) AS cnt FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Aufzug rechts L-Bau' AND $__timeFilter(ev.time) GROUP BY 1) t ORDER BY day",
           "refId": "D"
         },
         {
@@ -874,7 +926,7 @@
           },
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT date_trunc('day', time) AS \"time\", COUNT(*) AS \"Campus HN West\" FROM (SELECT time, floor, LAG(floor) OVER (PARTITION BY elevator_id ORDER BY time) AS prev_floor FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Campus Brücken HN West' AND $__timeFilter(ev.time)) sub WHERE floor != prev_floor OR prev_floor IS NULL GROUP BY 1 ORDER BY 1",
+          "rawSql": "SELECT date_trunc('day', time) AS \"time\", COUNT(*) AS \"Campus HN West\" FROM (SELECT time, floor, LAG(floor) OVER (PARTITION BY elevator_id ORDER BY time) AS prev_floor FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Campus Brücken HN West' AND $__timeFilter(ev.time)) sub WHERE floor != prev_floor OR prev_floor IS NULL GROUP BY 1\nHAVING ('${filter_gaps}' = 'Aus' OR ($__timeTo()::timestamp - $__timeFrom()::timestamp) <= interval '30 days' OR COUNT(*) > 0)\nORDER BY 1",
           "refId": "E"
         },
         {
@@ -884,7 +936,7 @@
           },
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT day AS \"time\", ROUND(AVG(cnt) OVER (ORDER BY day ROWS BETWEEN 6 PRECEDING AND CURRENT ROW)::numeric, 1) AS \"7-Tage-Trend (Campus)\" FROM (SELECT date_trunc('day', time) AS day, COUNT(*) AS cnt FROM (SELECT time, floor, LAG(floor) OVER (PARTITION BY elevator_id ORDER BY time) AS prev_floor FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Campus Brücken HN West' AND $__timeFilter(ev.time)) sub WHERE floor != prev_floor OR prev_floor IS NULL GROUP BY 1) t ORDER BY day",
+          "rawSql": "SELECT day AS \"time\", ROUND(AVG(cnt) OVER (ORDER BY day RANGE BETWEEN INTERVAL '6 days' PRECEDING AND CURRENT ROW)::numeric, 1) AS \"7-Tage-Trend (Campus)\" FROM (SELECT date_trunc('day', time) AS day, COUNT(*) AS cnt FROM (SELECT time, floor, LAG(floor) OVER (PARTITION BY elevator_id ORDER BY time) AS prev_floor FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Campus Brücken HN West' AND $__timeFilter(ev.time)) sub WHERE floor != prev_floor OR prev_floor IS NULL GROUP BY 1) t ORDER BY day",
           "refId": "F"
         },
         {
@@ -894,7 +946,7 @@
           },
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT date_trunc('day', time) AS \"time\", COUNT(*) AS \"Campus HN Ost\" FROM (SELECT time, floor, LAG(floor) OVER (PARTITION BY elevator_id ORDER BY time) AS prev_floor FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Campus Brücken HN Ost' AND $__timeFilter(ev.time)) sub WHERE floor != prev_floor OR prev_floor IS NULL GROUP BY 1 ORDER BY 1",
+          "rawSql": "SELECT date_trunc('day', time) AS \"time\", COUNT(*) AS \"Campus HN Ost\" FROM (SELECT time, floor, LAG(floor) OVER (PARTITION BY elevator_id ORDER BY time) AS prev_floor FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Campus Brücken HN Ost' AND $__timeFilter(ev.time)) sub WHERE floor != prev_floor OR prev_floor IS NULL GROUP BY 1\nHAVING ('${filter_gaps}' = 'Aus' OR ($__timeTo()::timestamp - $__timeFrom()::timestamp) <= interval '30 days' OR COUNT(*) > 0)\nORDER BY 1",
           "refId": "G"
         },
         {
@@ -904,7 +956,7 @@
           },
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT date_trunc('day', time) AS \"time\", COUNT(*) AS \"Teststand\" FROM (SELECT time, floor, LAG(floor) OVER (PARTITION BY elevator_id ORDER BY time) AS prev_floor FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Teststand lipah Aufzüge Heilbronn' AND $__timeFilter(ev.time)) sub WHERE floor != prev_floor OR prev_floor IS NULL GROUP BY 1 ORDER BY 1",
+          "rawSql": "SELECT date_trunc('day', time) AS \"time\", COUNT(*) AS \"Teststand\" FROM (SELECT time, floor, LAG(floor) OVER (PARTITION BY elevator_id ORDER BY time) AS prev_floor FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Teststand lipah Aufzüge Heilbronn' AND $__timeFilter(ev.time)) sub WHERE floor != prev_floor OR prev_floor IS NULL GROUP BY 1\nHAVING ('${filter_gaps}' = 'Aus' OR ($__timeTo()::timestamp - $__timeFrom()::timestamp) <= interval '30 days' OR COUNT(*) > 0)\nORDER BY 1",
           "refId": "H"
         }
       ]
@@ -1221,7 +1273,7 @@
           },
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT date_trunc('day', time) AS \"time\", COUNT(*) AS \"Ist Links L-Bau\" FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Aufzug links L-Bau' AND $__timeFilter(ev.time) GROUP BY 1 ORDER BY 1",
+          "rawSql": "SELECT date_trunc('day', time) AS \"time\", COUNT(*) AS \"Ist Links L-Bau\" FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Aufzug links L-Bau' AND $__timeFilter(ev.time) GROUP BY 1\nHAVING ('${filter_gaps}' = 'Aus' OR ($__timeTo()::timestamp - $__timeFrom()::timestamp) <= interval '30 days' OR COUNT(*) > 0)\nORDER BY 1",
           "refId": "A"
         },
         {
@@ -1261,7 +1313,7 @@
           },
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT date_trunc('day', time) AS \"time\", COUNT(*) AS \"Ist Rechts L-Bau\" FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Aufzug rechts L-Bau' AND $__timeFilter(ev.time) GROUP BY 1 ORDER BY 1",
+          "rawSql": "SELECT date_trunc('day', time) AS \"time\", COUNT(*) AS \"Ist Rechts L-Bau\" FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Aufzug rechts L-Bau' AND $__timeFilter(ev.time) GROUP BY 1\nHAVING ('${filter_gaps}' = 'Aus' OR ($__timeTo()::timestamp - $__timeFrom()::timestamp) <= interval '30 days' OR COUNT(*) > 0)\nORDER BY 1",
           "refId": "E"
         },
         {
@@ -1281,7 +1333,7 @@
           },
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT date_trunc('day', time) AS \"time\", COUNT(*) AS \"Ist Campus HN West\" FROM (SELECT time, floor, LAG(floor) OVER (PARTITION BY elevator_id ORDER BY time) AS prev_floor FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Campus Brücken HN West' AND $__timeFilter(ev.time)) sub WHERE floor != prev_floor OR prev_floor IS NULL GROUP BY 1 ORDER BY 1",
+          "rawSql": "SELECT date_trunc('day', time) AS \"time\", COUNT(*) AS \"Ist Campus HN West\" FROM (SELECT time, floor, LAG(floor) OVER (PARTITION BY elevator_id ORDER BY time) AS prev_floor FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Campus Brücken HN West' AND $__timeFilter(ev.time)) sub WHERE floor != prev_floor OR prev_floor IS NULL GROUP BY 1\nHAVING ('${filter_gaps}' = 'Aus' OR ($__timeTo()::timestamp - $__timeFrom()::timestamp) <= interval '30 days' OR COUNT(*) > 0)\nORDER BY 1",
           "refId": "G"
         },
         {
@@ -1399,7 +1451,7 @@
         "y": 41
       },
       "id": 106,
-      "title": "🌦️ Wetter-Korrelation (DWD Heilbronn)",
+      "title": "Wetter-Korrelation (DWD Heilbronn)",
       "type": "row"
     },
     {
@@ -1507,7 +1559,7 @@
           },
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT time AS \"time\", trip_count AS \"Links L-Bau\" FROM v_elevator_weather_daily WHERE elevator_name = 'Aufzug links L-Bau' AND elevator_name IN ($elevator) AND $__timeFilter(time) ORDER BY time",
+          "rawSql": "SELECT date_trunc('day', ev.time) AS \"time\", COUNT(*) AS \"Links L-Bau\" FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Aufzug links L-Bau' AND $__timeFilter(ev.time) GROUP BY 1\nHAVING ('${filter_gaps}' = 'Aus' OR ($__timeTo()::timestamp - $__timeFrom()::timestamp) <= interval '30 days' OR COUNT(*) > 0)\nORDER BY 1",
           "refId": "A"
         },
         {
@@ -1517,7 +1569,7 @@
           },
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT time AS \"time\", trip_count AS \"Rechts L-Bau\" FROM v_elevator_weather_daily WHERE elevator_name = 'Aufzug rechts L-Bau' AND elevator_name IN ($elevator) AND $__timeFilter(time) ORDER BY time",
+          "rawSql": "SELECT date_trunc('day', ev.time) AS \"time\", COUNT(*) AS \"Rechts L-Bau\" FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Aufzug rechts L-Bau' AND $__timeFilter(ev.time) GROUP BY 1\nHAVING ('${filter_gaps}' = 'Aus' OR ($__timeTo()::timestamp - $__timeFrom()::timestamp) <= interval '30 days' OR COUNT(*) > 0)\nORDER BY 1",
           "refId": "B"
         },
         {
@@ -1527,7 +1579,7 @@
           },
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT time AS \"time\", trip_count AS \"Campus HN\" FROM v_elevator_weather_daily WHERE elevator_name = 'Campus Brücken HN West' AND elevator_name IN ($elevator) AND $__timeFilter(time) ORDER BY time",
+          "rawSql": "SELECT date_trunc('day', ev.time) AS \"time\", COUNT(*) AS \"Campus HN\" FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Campus Brücken HN West' AND $__timeFilter(ev.time) GROUP BY 1\nHAVING ('${filter_gaps}' = 'Aus' OR ($__timeTo()::timestamp - $__timeFrom()::timestamp) <= interval '30 days' OR COUNT(*) > 0)\nORDER BY 1",
           "refId": "C"
         },
         {
@@ -1537,7 +1589,7 @@
           },
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT time AS \"time\", trip_count AS \"Feuerwehr\" FROM v_elevator_weather_daily WHERE elevator_name = 'Feuerwehraufzug L-Bau' AND elevator_name IN ($elevator) AND $__timeFilter(time) ORDER BY time",
+          "rawSql": "SELECT date_trunc('day', ev.time) AS \"time\", COUNT(*) AS \"Feuerwehr\" FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Feuerwehraufzug L-Bau' AND $__timeFilter(ev.time) GROUP BY 1\nHAVING ('${filter_gaps}' = 'Aus' OR ($__timeTo()::timestamp - $__timeFrom()::timestamp) <= interval '30 days' OR COUNT(*) > 0)\nORDER BY 1",
           "refId": "D"
         },
         {
@@ -1547,7 +1599,7 @@
           },
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT DISTINCT time AS \"time\", temperature_avg AS \"Temp. Avg (C)\" FROM v_elevator_weather_daily WHERE elevator_name = 'Aufzug links L-Bau' AND $__timeFilter(time) ORDER BY time",
+          "rawSql": "SELECT date_trunc('day', time) AS \"time\", AVG(temperature_avg) AS \"Temp. Avg (C)\" FROM weather_observations WHERE $__timeFilter(time) GROUP BY 1 ORDER BY 1",
           "refId": "E"
         },
         {
@@ -1557,7 +1609,7 @@
           },
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT time AS \"time\", trip_count AS \"Campus HN Ost\" FROM v_elevator_weather_daily WHERE elevator_name = 'Campus Brücken HN Ost' AND elevator_name IN ($elevator) AND $__timeFilter(time) ORDER BY time",
+          "rawSql": "SELECT date_trunc('day', ev.time) AS \"time\", COUNT(*) AS \"Campus HN Ost\" FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Campus Brücken HN Ost' AND $__timeFilter(ev.time) GROUP BY 1\nHAVING ('${filter_gaps}' = 'Aus' OR ($__timeTo()::timestamp - $__timeFrom()::timestamp) <= interval '30 days' OR COUNT(*) > 0)\nORDER BY 1",
           "refId": "F"
         },
         {
@@ -1567,7 +1619,7 @@
           },
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT time AS \"time\", trip_count AS \"Teststand lipah\" FROM v_elevator_weather_daily WHERE elevator_name = 'Teststand lipah Aufzüge Heilbronn' AND elevator_name IN ($elevator) AND $__timeFilter(time) ORDER BY time",
+          "rawSql": "SELECT date_trunc('day', ev.time) AS \"time\", COUNT(*) AS \"Teststand lipah\" FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Teststand lipah Aufzüge Heilbronn' AND $__timeFilter(ev.time) GROUP BY 1\nHAVING ('${filter_gaps}' = 'Aus' OR ($__timeTo()::timestamp - $__timeFrom()::timestamp) <= interval '30 days' OR COUNT(*) > 0)\nORDER BY 1",
           "refId": "G"
         }
       ]
@@ -1677,7 +1729,7 @@
           },
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT time AS \"time\", trip_count AS \"Links L-Bau\" FROM v_elevator_weather_daily WHERE elevator_name = 'Aufzug links L-Bau' AND elevator_name IN ($elevator) AND $__timeFilter(time) ORDER BY time",
+          "rawSql": "SELECT date_trunc('day', ev.time) AS \"time\", COUNT(*) AS \"Links L-Bau\" FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Aufzug links L-Bau' AND $__timeFilter(ev.time) GROUP BY 1\nHAVING ('${filter_gaps}' = 'Aus' OR ($__timeTo()::timestamp - $__timeFrom()::timestamp) <= interval '30 days' OR COUNT(*) > 0)\nORDER BY 1",
           "refId": "A"
         },
         {
@@ -1687,7 +1739,7 @@
           },
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT time AS \"time\", trip_count AS \"Rechts L-Bau\" FROM v_elevator_weather_daily WHERE elevator_name = 'Aufzug rechts L-Bau' AND elevator_name IN ($elevator) AND $__timeFilter(time) ORDER BY time",
+          "rawSql": "SELECT date_trunc('day', ev.time) AS \"time\", COUNT(*) AS \"Rechts L-Bau\" FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Aufzug rechts L-Bau' AND $__timeFilter(ev.time) GROUP BY 1\nHAVING ('${filter_gaps}' = 'Aus' OR ($__timeTo()::timestamp - $__timeFrom()::timestamp) <= interval '30 days' OR COUNT(*) > 0)\nORDER BY 1",
           "refId": "B"
         },
         {
@@ -1697,7 +1749,7 @@
           },
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT time AS \"time\", trip_count AS \"Campus HN\" FROM v_elevator_weather_daily WHERE elevator_name = 'Campus Brücken HN West' AND elevator_name IN ($elevator) AND $__timeFilter(time) ORDER BY time",
+          "rawSql": "SELECT date_trunc('day', ev.time) AS \"time\", COUNT(*) AS \"Campus HN\" FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Campus Brücken HN West' AND $__timeFilter(ev.time) GROUP BY 1\nHAVING ('${filter_gaps}' = 'Aus' OR ($__timeTo()::timestamp - $__timeFrom()::timestamp) <= interval '30 days' OR COUNT(*) > 0)\nORDER BY 1",
           "refId": "C"
         },
         {
@@ -1707,7 +1759,7 @@
           },
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT time AS \"time\", trip_count AS \"Feuerwehr\" FROM v_elevator_weather_daily WHERE elevator_name = 'Feuerwehraufzug L-Bau' AND elevator_name IN ($elevator) AND $__timeFilter(time) ORDER BY time",
+          "rawSql": "SELECT date_trunc('day', ev.time) AS \"time\", COUNT(*) AS \"Feuerwehr\" FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Feuerwehraufzug L-Bau' AND $__timeFilter(ev.time) GROUP BY 1\nHAVING ('${filter_gaps}' = 'Aus' OR ($__timeTo()::timestamp - $__timeFrom()::timestamp) <= interval '30 days' OR COUNT(*) > 0)\nORDER BY 1",
           "refId": "D"
         },
         {
@@ -1717,7 +1769,7 @@
           },
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT DISTINCT time AS \"time\", precipitation AS \"Niederschlag (mm)\" FROM v_elevator_weather_daily WHERE elevator_name = 'Aufzug links L-Bau' AND $__timeFilter(time) ORDER BY time",
+          "rawSql": "SELECT date_trunc('day', time) AS \"time\", SUM(precipitation) AS \"Niederschlag (mm)\" FROM weather_observations WHERE $__timeFilter(time) GROUP BY 1 ORDER BY 1",
           "refId": "E"
         },
         {
@@ -1727,7 +1779,7 @@
           },
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT time AS \"time\", trip_count AS \"Campus HN Ost\" FROM v_elevator_weather_daily WHERE elevator_name = 'Campus Brücken HN Ost' AND elevator_name IN ($elevator) AND $__timeFilter(time) ORDER BY time",
+          "rawSql": "SELECT date_trunc('day', ev.time) AS \"time\", COUNT(*) AS \"Campus HN Ost\" FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Campus Brücken HN Ost' AND $__timeFilter(ev.time) GROUP BY 1\nHAVING ('${filter_gaps}' = 'Aus' OR ($__timeTo()::timestamp - $__timeFrom()::timestamp) <= interval '30 days' OR COUNT(*) > 0)\nORDER BY 1",
           "refId": "F"
         },
         {
@@ -1737,7 +1789,7 @@
           },
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT time AS \"time\", trip_count AS \"Teststand lipah\" FROM v_elevator_weather_daily WHERE elevator_name = 'Teststand lipah Aufzüge Heilbronn' AND elevator_name IN ($elevator) AND $__timeFilter(time) ORDER BY time",
+          "rawSql": "SELECT date_trunc('day', ev.time) AS \"time\", COUNT(*) AS \"Teststand lipah\" FROM elevator_events ev JOIN elevators e ON e.id = ev.elevator_id WHERE e.name = 'Teststand lipah Aufzüge Heilbronn' AND $__timeFilter(ev.time) GROUP BY 1\nHAVING ('${filter_gaps}' = 'Aus' OR ($__timeTo()::timestamp - $__timeFrom()::timestamp) <= interval '30 days' OR COUNT(*) > 0)\nORDER BY 1",
           "refId": "G"
         }
       ]
@@ -1799,12 +1851,8 @@
                       "value": -0.5
                     },
                     {
-                      "color": "#FFA726",
-                      "value": -0.3
-                    },
-                    {
                       "color": "#78909C",
-                      "value": 0.0
+                      "value": -0.3
                     },
                     {
                       "color": "#66BB6A",
@@ -1864,12 +1912,8 @@
                       "value": -0.5
                     },
                     {
-                      "color": "#FFA726",
-                      "value": -0.3
-                    },
-                    {
                       "color": "#78909C",
-                      "value": 0.0
+                      "value": -0.3
                     },
                     {
                       "color": "#66BB6A",
@@ -1946,7 +1990,7 @@
       ]
     },
     {
-      "content": "### Pearson r\n\n| Farbe | Wert | Bedeutung |\n|---|---|---|\n| 🟢 Dunkelgrün | > +0.5 | Starke positive Korrelation |\n| 🟩 Hellgrün | +0.3 .. +0.5 | Moderate positive Korrelation |\n| ⬜ Grau | -0.3 .. +0.3 | Kein signifikanter Zusammenhang |\n| 🟧 Orange | -0.5 .. -0.3 | Moderate negative Korrelation |\n| 🔴 Dunkelrot | < -0.5 | Starke negative Korrelation |\n\n_Mind. 30 Datenpunkte fuer Aussagekraft._",
+      "content": "### Pearson r\n\n| Farbe | Wert | Bedeutung |\n|---|---|---|\n|  Dunkelgrün | > +0.5 | Starke positive Korrelation |\n|  Hellgrün | +0.3 .. +0.5 | Moderate positive Korrelation |\n| ⬜ Grau | -0.3 .. +0.3 | Kein signifikanter Zusammenhang |\n|  Orange | -0.5 .. -0.3 | Moderate negative Korrelation |\n|  Dunkelrot | < -0.5 | Starke negative Korrelation |\n\n_Mind. 30 Datenpunkte fuer Aussagekraft._",
       "gridPos": {
         "h": 5,
         "w": 8,
@@ -1960,7 +2004,7 @@
           "showLineNumbers": false,
           "showMiniMap": false
         },
-        "content": "### Pearson r\n\n| Farbe | Wert | Bedeutung |\n|---|---|---|\n| 🟢 Dunkelgrün | > +0.5 | Starke positive Korrelation |\n| 🟩 Hellgrün | +0.3 .. +0.5 | Moderate positive Korrelation |\n| ⬜ Grau | -0.3 .. +0.3 | Kein signifikanter Zusammenhang |\n| 🟧 Orange | -0.5 .. -0.3 | Moderate negative Korrelation |\n| 🔴 Dunkelrot | < -0.5 | Starke negative Korrelation |\n\n_Mind. 30 Datenpunkte fuer Aussagekraft._",
+        "content": "### Pearson r\n\n| Farbe | Wert | Bedeutung |\n|---|---|---|\n| 🟩 Dunkelgrün | > +0.5 | Starke positive Korrelation |\n| 🟢 Hellgrün | +0.3 .. +0.5 | Moderate positive Korrelation |\n| ⬜ Grau | -0.3 .. +0.3 | Kein signifikanter Zusammenhang |\n| 🔴 Hellrot | -0.5 .. -0.3 | Moderate negative Korrelation |\n| 🟥 Dunkelrot | < -0.5 | Starke negative Korrelation |\n\n_Mind. 30 Datenpunkte fuer Aussagekraft._",
         "mode": "markdown"
       },
       "title": "",
@@ -2417,7 +2461,7 @@
           },
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT time, trips AS \"Tatsächlich\", elevator_name AS metric FROM v_trip_anomalies WHERE elevator_name IN ($elevator) AND $__timeFilter(time) ORDER BY time",
+          "rawSql": "SELECT time, trips AS \"Tatsächlich\", elevator_name AS metric FROM v_trip_anomalies WHERE elevator_name IN ($elevator) AND $__timeFilter(time) \nAND ('${filter_gaps}' = 'Aus' OR ($__timeTo()::timestamp - $__timeFrom()::timestamp) <= interval '30 days' OR trips IS NOT NULL)\nORDER BY time",
           "refId": "A"
         },
         {
@@ -2427,7 +2471,7 @@
           },
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT time, expected_trips AS \"Erwartet (Baseline)\", elevator_name AS metric FROM v_trip_anomalies WHERE elevator_name IN ($elevator) AND $__timeFilter(time) ORDER BY time",
+          "rawSql": "SELECT time, expected_trips AS \"Erwartet (Baseline)\", elevator_name AS metric FROM v_trip_anomalies WHERE elevator_name IN ($elevator) AND $__timeFilter(time) \nAND ('${filter_gaps}' = 'Aus' OR ($__timeTo()::timestamp - $__timeFrom()::timestamp) <= interval '30 days' OR trips IS NOT NULL)\nORDER BY time",
           "refId": "B"
         },
         {

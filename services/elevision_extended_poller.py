@@ -683,7 +683,7 @@ def load_controllers() -> list[dict]:
     Neue Controller werden nur in der YAML-Datei eingetragen –
     kein Code-Change noetig (config-driven ingest).
     """
-    config_path = os.getenv("POLLER_CONFIG", "poller_config.yaml")
+    config_path = os.getenv("POLLER_CONFIG", "config/poller_config.yaml")
     with open(config_path, encoding="utf-8") as f:
         cfg = yaml.safe_load(f)
 

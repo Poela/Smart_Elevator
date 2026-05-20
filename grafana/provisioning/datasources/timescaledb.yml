@@ -4,8 +4,8 @@ datasources:
   - name: TimescaleDB
     uid: timescaledb-elevator
     type: postgres
-    # Lokal:  GF_POSTGRES_HOST=timescaledb (Docker-Service-Name)
-    # Azure:  GF_POSTGRES_HOST=<server>.postgres.database.azure.com
+    # Lokal: GF_POSTGRES_HOST=timescaledb (Docker-Service-Name)
+    # GCP:   GF_POSTGRES_HOST=<Cloud-SQL-IP>
     url: ${GF_POSTGRES_HOST}:5432
     user: ${GF_POSTGRES_USER}
     jsonData:

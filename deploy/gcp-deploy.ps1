@@ -196,7 +196,7 @@ if (-not $psqlCmd) {
 if ($psqlCmd) {
     Write-Info "Spiele schema-gcp.sql ein..."
     $env:PGPASSWORD = $DB_PASSWORD
-    psql -h $SQL_IP -U $DB_USER -d $DB_NAME -f schema-gcp.sql
+    psql -h $SQL_IP -U $DB_USER -d $DB_NAME -f database/schema-gcp.sql
     Remove-Item Env:PGPASSWORD -ErrorAction SilentlyContinue
     Write-OK "Schema eingespielt"
 } else {
@@ -204,7 +204,7 @@ if ($psqlCmd) {
     Write-Host "  psql nicht gefunden. Installieren: https://www.postgresql.org/download/windows/" -ForegroundColor Yellow
     Write-Host "  Dann manuell ausfuehren:" -ForegroundColor Yellow
     Write-Host "  `$env:PGPASSWORD='$DB_PASSWORD'" -ForegroundColor Yellow
-    Write-Host "  psql -h $SQL_IP -U $DB_USER -d $DB_NAME -f schema-gcp.sql" -ForegroundColor Yellow
+    Write-Host "  psql -h $SQL_IP -U $DB_USER -d $DB_NAME -f database/schema-gcp.sql" -ForegroundColor Yellow
     Read-Host "  Enter druecken wenn Schema eingespielt wurde"
 }
 
@@ -218,7 +218,7 @@ $GRAFANA_FULL = "docker.io/$DOCKERHUB_USER/${GRAFANA_IMAGE}:latest"
 $POLLER_FULL  = "docker.io/$DOCKERHUB_USER/${POLLER_IMAGE}:latest"
 
 Write-Info "Poller-Image bauen (linux/amd64, kein Provenance/SBOM)..."
-docker build --platform=linux/amd64 --provenance=false --sbom=false -f Dockerfile -t $POLLER_FULL .
+docker build --platform=linux/amd64 --provenance=false --sbom=false -f deploy/Dockerfile -t $POLLER_FULL .
 if ($LASTEXITCODE -ne 0) { Stop-OnError "Docker Build Poller fehlgeschlagen" }
 Write-Info "Poller-Image pushen..."
 docker push $POLLER_FULL
@@ -226,7 +226,7 @@ if ($LASTEXITCODE -ne 0) { Stop-OnError "Docker Push Poller fehlgeschlagen" }
 Write-OK "Poller-Image gepusht: $POLLER_FULL"
 
 Write-Info "Grafana-Image bauen (linux/amd64, kein Provenance/SBOM)..."
-docker build --platform=linux/amd64 --provenance=false --sbom=false -f Dockerfile.grafana -t $GRAFANA_FULL .
+docker build --platform=linux/amd64 --provenance=false --sbom=false -f deploy/Dockerfile.grafana -t $GRAFANA_FULL .
 if ($LASTEXITCODE -ne 0) { Stop-OnError "Docker Build Grafana fehlgeschlagen" }
 Write-Info "Grafana-Image pushen..."
 docker push $GRAFANA_FULL

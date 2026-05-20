@@ -338,7 +338,7 @@ SELECT dt.day AS time, dt.elevator_name, dt.trip_count,
     wo.temperature_min, wo.temperature_max, wo.temperature_avg,
     wo.precipitation, wo.wind_speed, wo.sunshine_min
 FROM daily_trips dt
-JOIN weather_observations wo ON date_trunc('day', wo.time) = dt.day
+LEFT JOIN weather_observations wo ON date_trunc('day', wo.time) = dt.day
 ORDER BY dt.day, dt.elevator_name;
 
 CREATE OR REPLACE VIEW v_weather_correlation AS
@@ -356,7 +356,7 @@ SELECT dt.elevator_name,
     ROUND(corr(dt.trip_count, dw.total_precip)::numeric, 3) AS corr_precipitation,
     COUNT(*) AS sample_days
 FROM daily_trips dt JOIN daily_weather dw ON dt.day = dw.day
-GROUP BY dt.elevator_name ORDER BY dt.elevator_name;
+GROUP BY dt.elevator_name HAVING COUNT(*) >= 10 ORDER BY dt.elevator_name;
 
 CREATE OR REPLACE VIEW v_trips_by_temp_bucket AS
 WITH daily AS (
