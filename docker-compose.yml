@@ -6,9 +6,9 @@ services:
     image: timescale/timescaledb:latest-pg16
     restart: unless-stopped
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: Test123
-      POSTGRES_DB: elevator_db
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-Test123}
+      POSTGRES_DB: ${DB_NAME:-elevator_db}
     ports:
       - "5432:5432"
     volumes:
@@ -27,14 +27,14 @@ services:
     ports:
       - "3000:3000"
     environment:
-      GF_SECURITY_ADMIN_USER: admin
-      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_SECURITY_ADMIN_USER: ${GF_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GF_ADMIN_PASSWORD:-admin}
       GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/elevator_dashboard.json
       # Datasource-Verbindung (lokal: Docker-Service-Name "timescaledb")
       GF_POSTGRES_HOST: timescaledb
-      GF_POSTGRES_USER: postgres
-      GF_POSTGRES_PASSWORD: Test123
-      GF_POSTGRES_DB: elevator_db
+      GF_POSTGRES_USER: ${DB_USER:-postgres}
+      GF_POSTGRES_PASSWORD: ${DB_PASSWORD:-Test123}
+      GF_POSTGRES_DB: ${DB_NAME:-elevator_db}
       GF_POSTGRES_SSLMODE: disable
     volumes:
       - grafana_data:/var/lib/grafana

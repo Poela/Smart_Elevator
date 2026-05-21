@@ -3,11 +3,11 @@ import os
 import psycopg2
 
 conn = psycopg2.connect(
-    host=os.getenv("DB_HOST", "34.123.254.160"),
+    host=os.getenv("DB_HOST", "localhost"),
     user=os.getenv("DB_USER", "postgres"),
-    password=os.getenv("DB_PASSWORD", "ElevatorHN2024!"),
+    password=os.getenv("DB_PASSWORD", ""),
     dbname=os.getenv("DB_NAME", "elevator_db"),
-    sslmode=os.getenv("DB_SSLMODE", "disable"),
+    sslmode=os.getenv("DB_SSLMODE", "prefer"),
 )
 cur = conn.cursor()
 

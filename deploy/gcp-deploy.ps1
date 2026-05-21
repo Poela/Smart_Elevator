@@ -24,17 +24,20 @@ $REGION            = "us-central1"         # Empfohlen: us-central1 (guenstigste
 $SQL_INSTANCE      = "elevator-db"
 $DB_NAME           = "elevator_db"
 $DB_USER           = "postgres"            # Cloud SQL Standard-Admin-User
-$DB_PASSWORD       = "ElevatorHN2024!"
+$DB_PASSWORD       = ""
 $DOCKERHUB_USER    = "hiprabbit"                    # z.B. "hiprabbit"
 $GRAFANA_IMAGE     = "elevator-grafana"
 $POLLER_IMAGE      = "elevator-poller"
 
-# JWT-Token aus .env lesen
-$JWT_TOKEN = ""
+# DB-Passwort und JWT-Token aus .env lesen
 if (Test-Path ".env") {
     foreach ($line in (Get-Content ".env")) {
-        if ($line -match "^ELEVISION_JWT_TOKEN=(.+)$") { $JWT_TOKEN = $Matches[1]; break }
+        if ($line -match "^DB_PASSWORD=(.+)$")          { $DB_PASSWORD = $Matches[1] }
+        if ($line -match "^ELEVISION_JWT_TOKEN=(.+)$")  { $JWT_TOKEN   = $Matches[1] }
     }
+}
+if (-not $DB_PASSWORD) {
+    $DB_PASSWORD = Read-Host "Cloud SQL Passwort eingeben"
 }
 if (-not $JWT_TOKEN) {
     $JWT_TOKEN = Read-Host "Elevision JWT-Token eingeben"
