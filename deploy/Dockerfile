@@ -19,7 +19,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Anwendungscode
 COPY services/*.py ./
-COPY config/poller_config.yaml ./
+COPY config/ ./config/
 
 # Kein Standard-CMD: wird pro Container-App ueberschrieben
 CMD ["python", "api_poller.py"]

@@ -1,0 +1,252 @@
+<mxfile host="app.diagrams.net" modified="2026-05-21T00:00:00.000Z" version="21.0.0">
+  <diagram name="Smart Elevator Architektur" id="smart-elevator-arch">
+    <mxGraphModel dx="1500" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- TITLE -->
+        <mxCell id="100" value="Smart Elevator | Systemarchitektur"
+          style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1;"
+          vertex="1" parent="1">
+          <mxGeometry x="20" y="10" width="1210" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- EXTERNE DATENQUELLEN                                          -->
+        <!-- ============================================================ -->
+        <mxCell id="200" value="Externe Datenquellen"
+          style="swimlane;fontStyle=1;align=center;startSize=25;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;"
+          vertex="1" parent="1">
+          <mxGeometry x="20" y="60" width="940" height="100" as="geometry" />
+        </mxCell>
+
+        <mxCell id="201" value="&lt;b&gt;Elevision REST API&lt;/b&gt;&lt;br&gt;Echtzeit-Aufzugsdaten&lt;br&gt;Positionen, Fehler, Türen"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;"
+          vertex="1" parent="200">
+          <mxGeometry x="20" y="35" width="200" height="55" as="geometry" />
+        </mxCell>
+
+        <mxCell id="202" value="&lt;b&gt;DWD WarnWetter API&lt;/b&gt;&lt;br&gt;Stündliche Wetterdaten&lt;br&gt;Messstation Öhringen"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;"
+          vertex="1" parent="200">
+          <mxGeometry x="240" y="35" width="200" height="55" as="geometry" />
+        </mxCell>
+
+        <mxCell id="203" value="&lt;b&gt;Historische CSV-Daten&lt;/b&gt;&lt;br&gt;Einmaliger Initialimport&lt;br&gt;Vergangene Fahrtendaten"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;"
+          vertex="1" parent="200">
+          <mxGeometry x="460" y="35" width="200" height="55" as="geometry" />
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- INGEST-LAYER                                                  -->
+        <!-- ============================================================ -->
+        <mxCell id="300" value="Ingest-Layer — 6 Python-Services"
+          style="swimlane;fontStyle=1;align=center;startSize=25;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;"
+          vertex="1" parent="1">
+          <mxGeometry x="20" y="190" width="940" height="230" as="geometry" />
+        </mxCell>
+
+        <mxCell id="301" value="&lt;b&gt;api_poller.py&lt;/b&gt;&lt;br&gt;alle 60 Sekunden&lt;br&gt;Live-Aufzugsposition"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;"
+          vertex="1" parent="300">
+          <mxGeometry x="20" y="35" width="155" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="302" value="&lt;b&gt;extended_poller.py&lt;/b&gt;&lt;br&gt;1 Min bis 1 Stunde&lt;br&gt;Fehler, Türen, Statistiken"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;"
+          vertex="1" parent="300">
+          <mxGeometry x="190" y="35" width="155" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="303" value="&lt;b&gt;dwd_poller.py&lt;/b&gt;&lt;br&gt;stündlich&lt;br&gt;Wetterdaten"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;"
+          vertex="1" parent="300">
+          <mxGeometry x="360" y="35" width="155" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="304" value="&lt;b&gt;csv_importer.py&lt;/b&gt;&lt;br&gt;einmalig&lt;br&gt;Historische Daten"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;"
+          vertex="1" parent="300">
+          <mxGeometry x="20" y="130" width="155" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="305" value="&lt;b&gt;forecast_service.py&lt;/b&gt;&lt;br&gt;täglich 02:00 Uhr&lt;br&gt;ML-Prognose (14 Tage)"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;"
+          vertex="1" parent="300">
+          <mxGeometry x="190" y="130" width="155" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="306" value="&lt;b&gt;anomaly_alerter.py&lt;/b&gt;&lt;br&gt;täglich 07:00 Uhr&lt;br&gt;Anomalie-Erkennung"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;"
+          vertex="1" parent="300">
+          <mxGeometry x="360" y="130" width="155" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="307" value="&lt;b&gt;Resilienz — 5 Schichten&lt;/b&gt;&lt;br&gt;① Rate-Limiter — Schutz der externen API&lt;br&gt;② Automatischer Retry mit Wartezeit&lt;br&gt;③ Circuit Breaker — pausiert bei Ausfällen&lt;br&gt;④ Cache — letzter bekannter Wert bleibt aktiv&lt;br&gt;⑤ Dead-Letter Queue — fehlgeschlagene Einträge&lt;br&gt;&lt;br&gt;Konfiguration über YAML-Datei und .env"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;align=left;verticalAlign=top;"
+          vertex="1" parent="300">
+          <mxGeometry x="535" y="35" width="385" height="165" as="geometry" />
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- PERSISTENZ                                                    -->
+        <!-- ============================================================ -->
+        <mxCell id="400" value="Persistenz — TimescaleDB (PostgreSQL 16)"
+          style="swimlane;fontStyle=1;align=center;startSize=25;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=12;"
+          vertex="1" parent="1">
+          <mxGeometry x="20" y="450" width="940" height="210" as="geometry" />
+        </mxCell>
+
+        <mxCell id="401" value="&lt;b&gt;Zeitreihentabellen&lt;/b&gt;&lt;br&gt;Aufzugsfahrten&lt;br&gt;Fehlermeldungen&lt;br&gt;Türstatistiken&lt;br&gt;Fahrtstatistiken&lt;br&gt;Verfügbarkeit&lt;br&gt;Wetterdaten&lt;br&gt;Prognosen"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;align=left;verticalAlign=top;"
+          vertex="1" parent="400">
+          <mxGeometry x="20" y="35" width="200" height="160" as="geometry" />
+        </mxCell>
+
+        <mxCell id="402" value="&lt;b&gt;Stammdaten&lt;/b&gt;&lt;br&gt;Aufzüge (mit Geo-Daten)&lt;br&gt;Sensoren&lt;br&gt;Korrekturen&lt;br&gt;Alarm-Protokoll&lt;br&gt;&lt;br&gt;&lt;b&gt;Warteschlange&lt;/b&gt;&lt;br&gt;Fehlgeschlagene Einträge&lt;br&gt;zur späteren Wiederholung"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;align=left;verticalAlign=top;"
+          vertex="1" parent="400">
+          <mxGeometry x="240" y="35" width="200" height="160" as="geometry" />
+        </mxCell>
+
+        <mxCell id="403" value="&lt;b&gt;Aggregation&lt;/b&gt;&lt;br&gt;Stundenmittel (dauerhaft)&lt;br&gt;Tagesmittel (dauerhaft)&lt;br&gt;&lt;br&gt;&lt;b&gt;Aufbewahrung&lt;/b&gt;&lt;br&gt;Rohdaten: 1 Jahr&lt;br&gt;Wetterdaten: 3 Jahre&lt;br&gt;Verfügbarkeit: 90 Tage&lt;br&gt;&lt;br&gt;&lt;b&gt;Datenqualität&lt;/b&gt;&lt;br&gt;Pflichtfeld-Prüfung&lt;br&gt;Duplikat-Schutz&lt;br&gt;Qualitätsstempel (0–3)"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;align=left;verticalAlign=top;"
+          vertex="1" parent="400">
+          <mxGeometry x="460" y="35" width="210" height="160" as="geometry" />
+        </mxCell>
+
+        <mxCell id="404" value="&lt;b&gt;Flexibilität&lt;/b&gt;&lt;br&gt;Flexible Attribute (JSONB)&lt;br&gt;Erweiterbar ohne Migration&lt;br&gt;&lt;br&gt;&lt;b&gt;Indizes&lt;/b&gt;&lt;br&gt;Zeitbereich-Abfragen&lt;br&gt;Eindeutiger Upsert&lt;br&gt;JSON-Feldsuche&lt;br&gt;Geo-Filter&lt;br&gt;Qualitäts-Reports&lt;br&gt;&lt;br&gt;&lt;b&gt;Schema-Modell&lt;/b&gt;&lt;br&gt;OGC SensorThings API"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;align=left;verticalAlign=top;"
+          vertex="1" parent="400">
+          <mxGeometry x="690" y="35" width="230" height="160" as="geometry" />
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- OBSERVABILITY                                                 -->
+        <!-- ============================================================ -->
+        <mxCell id="500" value="Observability"
+          style="swimlane;fontStyle=1;align=center;startSize=25;fillColor=#f8cecc;strokeColor=#b85450;fontSize=12;"
+          vertex="1" parent="1">
+          <mxGeometry x="980" y="190" width="250" height="230" as="geometry" />
+        </mxCell>
+
+        <mxCell id="501" value="&lt;b&gt;Prometheus-Metriken&lt;/b&gt;&lt;br&gt;Drei Messpunkte (Port 8080–8082)&lt;br&gt;&lt;hr/&gt;Abfragen pro Quelle&lt;br&gt;Fehler nach Typ&lt;br&gt;Antwortzeiten&lt;br&gt;Circuit-Breaker-Status&lt;br&gt;Warteschlangen-Größe&lt;br&gt;Letzter erfolgreicher Poll&lt;br&gt;&lt;hr/&gt;Gesundheits-Endpunkt (DB)&lt;br&gt;Bereitschafts-Endpunkt (Scheduler)"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;align=left;verticalAlign=top;"
+          vertex="1" parent="500">
+          <mxGeometry x="15" y="35" width="220" height="185" as="geometry" />
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- GRAFANA                                                       -->
+        <!-- ============================================================ -->
+        <mxCell id="600" value="Grafana 11.1 · Port 3000"
+          style="swimlane;fontStyle=1;align=center;startSize=25;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=12;"
+          vertex="1" parent="1">
+          <mxGeometry x="980" y="450" width="250" height="210" as="geometry" />
+        </mxCell>
+
+        <mxCell id="601" value="&lt;b&gt;Dashboards&lt;/b&gt;&lt;br&gt;Betriebsübersicht&lt;br&gt;Analyse &amp; Muster&lt;br&gt;API-Daten&lt;br&gt;Türstatistiken&lt;br&gt;Fehlermeldungen&lt;br&gt;Wartungsübersicht&lt;br&gt;&lt;hr/&gt;&lt;b&gt;Datenquelle&lt;/b&gt;&lt;br&gt;Direkt: TimescaleDB&lt;br&gt;&lt;hr/&gt;&lt;b&gt;Alerting&lt;/b&gt;&lt;br&gt;Datenausfall (6 Stunden)&lt;br&gt;Hohe Fehlerrate (1 Stunde)"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;align=left;verticalAlign=top;"
+          vertex="1" parent="600">
+          <mxGeometry x="15" y="35" width="220" height="165" as="geometry" />
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- DEPLOYMENT                                                    -->
+        <!-- ============================================================ -->
+        <mxCell id="700" value="Deployment"
+          style="swimlane;fontStyle=1;align=center;startSize=25;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;fontSize=12;"
+          vertex="1" parent="1">
+          <mxGeometry x="20" y="685" width="1210" height="140" as="geometry" />
+        </mxCell>
+
+        <mxCell id="701" value="&lt;b&gt;Lokal — Docker Compose&lt;/b&gt;&lt;br&gt;Datenbank + Grafana&lt;br&gt;als Container&lt;br&gt;Poller direkt per Python&lt;br&gt;Health-Check vor Start"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;align=left;verticalAlign=top;"
+          vertex="1" parent="700">
+          <mxGeometry x="20" y="35" width="220" height="90" as="geometry" />
+        </mxCell>
+
+        <mxCell id="702" value="&lt;b&gt;GCP — Dauerhafte Services&lt;/b&gt;&lt;br&gt;API-Poller (immer aktiv)&lt;br&gt;Extended Poller (immer aktiv)&lt;br&gt;Grafana (öffentlich erreichbar)&lt;br&gt;Min. 1 Instanz, kein Cold Start"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;align=left;verticalAlign=top;"
+          vertex="1" parent="700">
+          <mxGeometry x="260" y="35" width="260" height="90" as="geometry" />
+        </mxCell>
+
+        <mxCell id="703" value="&lt;b&gt;GCP — Geplante Jobs&lt;/b&gt;&lt;br&gt;Wetter-Poller (stündlich)&lt;br&gt;Prognose (täglich 02:00)&lt;br&gt;Alerter (täglich 07:00)&lt;br&gt;Automatisch neu gestartet bei Fehler"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;align=left;verticalAlign=top;"
+          vertex="1" parent="700">
+          <mxGeometry x="540" y="35" width="260" height="90" as="geometry" />
+        </mxCell>
+
+        <mxCell id="704" value="&lt;b&gt;GCP — Infrastruktur&lt;/b&gt;&lt;br&gt;Cloud Scheduler (Zeitsteuerung)&lt;br&gt;Cloud SQL (verwaltete Datenbank)&lt;br&gt;Docker Hub (Image-Ablage)&lt;br&gt;Tägliche Backups, 7 Tage Aufbewahrung"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;align=left;verticalAlign=top;"
+          vertex="1" parent="700">
+          <mxGeometry x="820" y="35" width="370" height="90" as="geometry" />
+        </mxCell>
+
+        <!-- ============================================================ -->
+        <!-- PFEILE                                                        -->
+        <!-- ============================================================ -->
+
+        <mxCell id="800" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#6c8ebf;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;"
+          edge="1" source="201" target="301" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="801" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#6c8ebf;exitX=0.75;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;"
+          edge="1" source="201" target="302" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="802" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#6c8ebf;"
+          edge="1" source="202" target="303" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="803" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#6c8ebf;"
+          edge="1" source="203" target="304" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="810" value="Daten speichern"
+          style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#82b366;fontSize=10;"
+          edge="1" source="300" target="400" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="811" value="Fahrtendaten lesen"
+          style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#9673a6;fontSize=10;dashed=1;exitX=0.3;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;"
+          edge="1" source="400" target="305" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="812" value="Anomalien lesen"
+          style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#9673a6;fontSize=10;dashed=1;exitX=0.43;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;"
+          edge="1" source="400" target="306" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="820" value="Datenbankabfrage"
+          style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#d79b00;fontSize=10;"
+          edge="1" source="400" target="600" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="821" value="Metriken"
+          style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#b85450;fontSize=10;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;"
+          edge="1" source="300" target="500" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="822" value="Visualisierung"
+          style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#b85450;fontSize=10;"
+          edge="1" source="500" target="600" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

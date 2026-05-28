@@ -92,7 +92,7 @@
   },
   "panels": [
     {
-      "content": "### [ Übersicht](/d/smart-elevator-v1) &nbsp;·&nbsp; [ Analyse](/d/smart-elevator-analyse) &nbsp;·&nbsp; [ Steuerung](/d/smart-elevator-api) &nbsp;·&nbsp;  **Fehler & Ereignisse** &nbsp;·&nbsp; [ Wartung](/d/smart-elevator-maintenance) &nbsp;·&nbsp; [ Türen](/d/smart-elevator-doors)",
+      "content": "<div style='display:flex;gap:6px;align-items:center;padding:6px 0;flex-wrap:wrap;'><a href='/d/smart-elevator-v1' style='border:1px solid #5794F2;padding:4px 14px;border-radius:4px;color:#5794F2;text-decoration:none;font-size:14px;'>Übersicht</a><a href='/d/smart-elevator-analyse' style='border:1px solid #5794F2;padding:4px 14px;border-radius:4px;color:#5794F2;text-decoration:none;font-size:14px;'>Analyse</a><a href='/d/smart-elevator-api' style='border:1px solid #5794F2;padding:4px 14px;border-radius:4px;color:#5794F2;text-decoration:none;font-size:14px;'>Steuerung</a><span style='border:1px solid rgba(255,255,255,0.85);padding:4px 14px;border-radius:4px;color:#fff;font-weight:600;font-size:14px;'>Fehler & Ereignisse</span><a href='/d/smart-elevator-maintenance' style='border:1px solid #5794F2;padding:4px 14px;border-radius:4px;color:#5794F2;text-decoration:none;font-size:14px;'>Wartung</a><a href='/d/smart-elevator-doors' style='border:1px solid #5794F2;padding:4px 14px;border-radius:4px;color:#5794F2;text-decoration:none;font-size:14px;'>Türen</a></div>",
       "gridPos": {
         "h": 2,
         "w": 24,
@@ -102,8 +102,8 @@
       "id": 1,
       "transparent": true,
       "options": {
-        "mode": "markdown",
-        "content": "### [ Übersicht](/d/smart-elevator-v1) &nbsp;·&nbsp; [ Analyse](/d/smart-elevator-analyse) &nbsp;·&nbsp; [ Steuerung](/d/smart-elevator-api) &nbsp;·&nbsp;  **Fehler & Ereignisse** &nbsp;·&nbsp; [ Wartung](/d/smart-elevator-maintenance) &nbsp;·&nbsp; [ Türen](/d/smart-elevator-doors)"
+        "mode": "html",
+        "content": "<div style='display:flex;gap:6px;align-items:center;padding:6px 0;flex-wrap:wrap;'><a href='/d/smart-elevator-v1' style='border:1px solid #5794F2;padding:4px 14px;border-radius:4px;color:#5794F2;text-decoration:none;font-size:14px;'>Übersicht</a><a href='/d/smart-elevator-analyse' style='border:1px solid #5794F2;padding:4px 14px;border-radius:4px;color:#5794F2;text-decoration:none;font-size:14px;'>Analyse</a><a href='/d/smart-elevator-api' style='border:1px solid #5794F2;padding:4px 14px;border-radius:4px;color:#5794F2;text-decoration:none;font-size:14px;'>Steuerung</a><span style='border:1px solid rgba(255,255,255,0.85);padding:4px 14px;border-radius:4px;color:#fff;font-weight:600;font-size:14px;'>Fehler & Ereignisse</span><a href='/d/smart-elevator-maintenance' style='border:1px solid #5794F2;padding:4px 14px;border-radius:4px;color:#5794F2;text-decoration:none;font-size:14px;'>Wartung</a><a href='/d/smart-elevator-doors' style='border:1px solid #5794F2;padding:4px 14px;border-radius:4px;color:#5794F2;text-decoration:none;font-size:14px;'>Türen</a></div>"
       },
       "type": "text"
     },
@@ -935,54 +935,5 @@
       ]
     }
   ],
-  "links": [
-    {
-      "title": "Übersicht",
-      "type": "link",
-      "url": "/d/smart-elevator-v1",
-      "targetBlank": false,
-      "icon": "dashboard",
-      "tooltip": "Live-Status & Nutzungsübersicht"
-    },
-    {
-      "title": "Analyse & Prognose",
-      "type": "link",
-      "url": "/d/smart-elevator-analyse",
-      "targetBlank": false,
-      "icon": "chart-line",
-      "tooltip": "Verhaltensanalyse, Forecast & Wetter-Korrelation"
-    },
-    {
-      "title": "Prädiktive Steuerung",
-      "type": "link",
-      "url": "/d/smart-elevator-api",
-      "targetBlank": false,
-      "icon": "bolt",
-      "tooltip": "Empfehlungssystem & API-Live-Daten"
-    },
-    {
-      "title": "Türen & Mechanik",
-      "type": "link",
-      "url": "/d/smart-elevator-doors",
-      "targetBlank": false,
-      "icon": "door-open",
-      "tooltip": "Türstatistiken & Mechanik-Daten"
-    },
-    {
-      "title": "Fehler & Ereignisse",
-      "type": "link",
-      "url": "/d/smart-elevator-errors",
-      "targetBlank": false,
-      "icon": "bell",
-      "tooltip": "Fehlercodes & Ereignisprotokoll"
-    },
-    {
-      "title": "Wartung & Gesundheit",
-      "type": "link",
-      "url": "/d/smart-elevator-maintenance",
-      "targetBlank": false,
-      "icon": "heart",
-      "tooltip": "Wartungsintervalle & System-Gesundheit"
-    }
-  ]
+  "links": []
 }
